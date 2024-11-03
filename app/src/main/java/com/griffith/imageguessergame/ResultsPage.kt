@@ -1,8 +1,11 @@
+// ResultsPage.kt
 package com.griffith.imageguessergame
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -13,27 +16,64 @@ import androidx.navigation.NavBackStackEntry
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry) {
+    val playerScore1 = backStackEntry.arguments?.getString("playerScore")?.toInt() ?: 0
+    val playerScore2 = backStackEntry.arguments?.getString("playerScore2")?.toInt() ?: 0
     val player1Name = backStackEntry.arguments?.getString("player1Name") ?: "Player 1"
     val player2Name = backStackEntry.arguments?.getString("player2Name") ?: "Player 2"
-    val playerScore = backStackEntry.arguments?.getString("playerScore")?.toIntOrNull() ?: 0
-    val isMultiplayer = backStackEntry.arguments?.getBoolean("isMultiplayer") ?: false
+    val isMultiplayer = player2Name.isNotBlank()
 
+    // Determine the winner or if it's a tie
+    val winnerMessage = if (isMultiplayer) {
+        when {
+            playerScore1 > playerScore2 -> "$player1Name Wins!"
+            playerScore2 > playerScore1 -> "$player2Name Wins!"
+            else -> "It's a Tie!"
+        }
+    } else {
+        "$player1Name Score: $playerScore1" // Only show the score for single-player
+    }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "Game Over!", fontSize = 30.sp, modifier = Modifier.padding(bottom = 16.dp))
-        Text(text = "Your score: $playerScore", fontSize = 24.sp, modifier = Modifier.padding(bottom = 24.dp))
-
-        Button(
-            onClick = { navController.navigate("gameCategory/${player1Name}/${player2Name}/${isMultiplayer}") },
-            modifier = Modifier.padding(horizontal = 32.dp)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(text = "Game Results") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "Back to Categories")
+            Text(text = "Results", fontSize = 24.sp)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(text = "$player1Name Score: $playerScore1", fontSize = 20.sp)
+            if (isMultiplayer) {
+                Text(text = "$player2Name Score: $playerScore2", fontSize = 20.sp)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Display the winner message
+            if (isMultiplayer) {
+                Text(text = winnerMessage, fontSize = 24.sp)
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Button(onClick = { navController.navigate("HomePage") }) {
+                Text(text = "Play Again")
+            }
         }
     }
 }

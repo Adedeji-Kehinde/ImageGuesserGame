@@ -54,8 +54,10 @@ fun NavGraph() {
             GameScreenPage(navController, backStackEntry)
         }
 
-        composable("resultsPage/{playerScore}") { backStackEntry ->
+        // Navigate to results page
+        composable("resultsPage/{playerScore}/{playerScore2}/{player1Name}/{player2Name}") { backStackEntry ->
             ResultsPage(navController, backStackEntry)
         }
+
     }
 }

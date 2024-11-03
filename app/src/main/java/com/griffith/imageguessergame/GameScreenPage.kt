@@ -22,6 +22,7 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
     val categoryName = backStackEntry.arguments?.getString("categoryName") ?: "Category"
     val player1Name = backStackEntry.arguments?.getString("player1Name") ?: "Player 1"
     val player2Name = backStackEntry.arguments?.getString("player2Name") ?: "Player 2"
+    val isMultiplayer = player2Name.isNotBlank() // Check if multiplayer
 
     // Placeholder for images and names
     val images = remember {
@@ -41,31 +42,31 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
     }
 
     var currentImageIndex by remember { mutableStateOf(0) }
-    var previousImageIndex by remember { mutableStateOf(-1) }
     var playerGuess by remember { mutableStateOf("") }
     var feedbackMessage by remember { mutableStateOf("") }
     var attemptCount by remember { mutableStateOf(0) }
     var showAnswer by remember { mutableStateOf(false) }
-    var score by remember { mutableStateOf(0) }
+    var score1 by remember { mutableStateOf(0) }
+    var score2 by remember { mutableStateOf(0) }
+    var currentPlayer by remember { mutableStateOf(1) } // 1 for Player 1, 2 for Player 2
 
     val (currentImage, correctAnswer) = images[currentImageIndex]
 
     // Function to move to the next image or navigate to Results Page
     fun nextImage() {
         if (currentImageIndex == images.size - 1) {
-            // Navigate to the ResultsPage with the final score
-            navController.navigate("resultsPage/$score")
+            // Navigate to the ResultsPage with the final scores
+            navController.navigate("resultsPage/${score1}/${score2}/${player1Name}/${player2Name}")
         } else {
-            // Move to the next image while avoiding consecutive repeats
-            previousImageIndex = currentImageIndex
-            do {
-                currentImageIndex = (currentImageIndex + 1) % images.size
-            } while (currentImageIndex == previousImageIndex)
-
+            // Move to the next image
+            currentImageIndex++
             playerGuess = ""
             feedbackMessage = ""
             attemptCount = 0
             showAnswer = false
+
+            // Switch players
+            currentPlayer = if (currentPlayer == 1) 2 else 1
         }
     }
 
@@ -73,7 +74,15 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
         when {
             guess.equals(answer, ignoreCase = true) -> {
                 feedbackMessage = "Correct! 🎉"
-                score++ // Increase score for correct answer
+                if (isMultiplayer) {
+                    if (currentPlayer == 1) {
+                        score1++ // Increase score for Player 1
+                    } else {
+                        score2++ // Increase score for Player 2
+                    }
+                } else {
+                    score1++ // Increase score for single player
+                }
                 nextImage()
             }
             attemptCount < 1 -> {
@@ -107,6 +116,16 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Display current player's turn
+            Text(
+                text = if (isMultiplayer) {
+                    "It's ${if (currentPlayer == 1) player1Name else player2Name}'s turn!"
+                } else {
+                    "$player1Name, it's your turn!"
+                },
+                fontSize = 20.sp
+            )
+
             if (showAnswer) {
                 Text(text = "Answer: $correctAnswer", fontSize = 24.sp)
                 LaunchedEffect(Unit) {
@@ -122,7 +141,7 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
                         .padding(bottom = 16.dp)
                 )
 
-                Text(text = "$player1Name & $player2Name, guess the $categoryName!", fontSize = 18.sp)
+                Text(text = "Guess the $categoryName!", fontSize = 18.sp)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -130,9 +149,7 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
                     value = playerGuess,
                     onValueChange = { playerGuess = it },
                     label = { Text("Enter your guess") },
-                    singleLine = true,
                     modifier = Modifier.fillMaxWidth()
-
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
