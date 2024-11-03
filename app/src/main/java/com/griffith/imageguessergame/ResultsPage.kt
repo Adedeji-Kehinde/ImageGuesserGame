@@ -16,6 +16,8 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
     val player1Name = backStackEntry.arguments?.getString("player1Name") ?: "Player 1"
     val player2Name = backStackEntry.arguments?.getString("player2Name") ?: "Player 2"
     val playerScore = backStackEntry.arguments?.getString("playerScore")?.toIntOrNull() ?: 0
+    val isMultiplayer = backStackEntry.arguments?.getBoolean("isMultiplayer") ?: false
+
 
     Column(
         modifier = Modifier
@@ -28,7 +30,7 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
         Text(text = "Your score: $playerScore", fontSize = 24.sp, modifier = Modifier.padding(bottom = 24.dp))
 
         Button(
-            onClick = { navController.navigate("gameCategory/${player1Name}/${player2Name}") },
+            onClick = { navController.navigate("gameCategory/${player1Name}/${player2Name}/${isMultiplayer}") },
             modifier = Modifier.padding(horizontal = 32.dp)
         ) {
             Text(text = "Back to Categories")

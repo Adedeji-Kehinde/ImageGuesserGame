@@ -1,3 +1,4 @@
+// GameScreenPage.kt
 package com.griffith.imageguessergame
 
 import androidx.compose.foundation.Image
@@ -21,54 +22,58 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
     val categoryName = backStackEntry.arguments?.getString("categoryName") ?: "Category"
     val player1Name = backStackEntry.arguments?.getString("player1Name") ?: "Player 1"
     val player2Name = backStackEntry.arguments?.getString("player2Name") ?: "Player 2"
-    var playerScore by remember { mutableStateOf(0) }
 
-    // Placeholder for images and corresponding names based on category
-    val images = if (categoryName == "Logos") {
-        listOf(
-            R.drawable.logo_apple to "Apple",
-            R.drawable.logo_nike to "Nike",
-            R.drawable.logo_adidas to "Adidas"
-            // Add more logos as needed
-        )
-    } else { // Animals category or any other fallback
-        listOf(
-            R.drawable.animal_fox to "Fox",
-            R.drawable.animal_flamingo to "Flamingo",
-            R.drawable.animal_bear to "Bear"
-            // Add more animals as needed
-        )
+    // Placeholder for images and names
+    val images = remember {
+        when (categoryName) {
+            "Animals" -> listOf(
+                R.drawable.animal_fox to "Fox",
+                R.drawable.animal_flamingo to "Flamingo",
+                R.drawable.animal_bear to "Bear"
+            )
+            "Logos" -> listOf(
+                R.drawable.logo_apple to "Apple",
+                R.drawable.logo_nike to "Nike",
+                R.drawable.logo_adidas to "Adidas"
+            )
+            else -> emptyList()
+        }.shuffled() // Shuffle the images list when it's first created
     }
 
     var currentImageIndex by remember { mutableStateOf(0) }
+    var previousImageIndex by remember { mutableStateOf(-1) }
     var playerGuess by remember { mutableStateOf("") }
     var feedbackMessage by remember { mutableStateOf("") }
     var attemptCount by remember { mutableStateOf(0) }
     var showAnswer by remember { mutableStateOf(false) }
+    var score by remember { mutableStateOf(0) }
 
     val (currentImage, correctAnswer) = images[currentImageIndex]
-    fun goToResultsPage() {
-        navController.navigate("resultsPage/$playerScore")
-    }
-    // Function to move to the next image
+
+    // Function to move to the next image or navigate to Results Page
     fun nextImage() {
-        if (currentImageIndex < images.size - 1) {
-            currentImageIndex++
+        if (currentImageIndex == images.size - 1) {
+            // Navigate to the ResultsPage with the final score
+            navController.navigate("resultsPage/$score")
+        } else {
+            // Move to the next image while avoiding consecutive repeats
+            previousImageIndex = currentImageIndex
+            do {
+                currentImageIndex = (currentImageIndex + 1) % images.size
+            } while (currentImageIndex == previousImageIndex)
+
             playerGuess = ""
             feedbackMessage = ""
             attemptCount = 0
             showAnswer = false
-        } else {
-            goToResultsPage()
         }
     }
 
-    // Function to check the guess and update the state accordingly
     fun checkGuess(guess: String, answer: String) {
         when {
             guess.equals(answer, ignoreCase = true) -> {
                 feedbackMessage = "Correct! 🎉"
-                playerScore++
+                score++ // Increase score for correct answer
                 nextImage()
             }
             attemptCount < 1 -> {
@@ -105,7 +110,7 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
             if (showAnswer) {
                 Text(text = "Answer: $correctAnswer", fontSize = 24.sp)
                 LaunchedEffect(Unit) {
-                    delay(5000)
+                    delay(3000)
                     nextImage()
                 }
             } else {
@@ -127,6 +132,7 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
                     label = { Text("Enter your guess") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
+
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
