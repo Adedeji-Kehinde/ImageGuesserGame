@@ -149,6 +149,7 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
                     value = playerGuess,
                     onValueChange = { playerGuess = it },
                     label = { Text("Enter your guess") },
+                    singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
 
