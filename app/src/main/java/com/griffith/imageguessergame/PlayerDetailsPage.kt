@@ -84,7 +84,7 @@ fun PlayerDetailsPage(navController: NavController, isMultiplayer: Boolean) {
             // "Select Category" Button, enabled only if form is valid
             Button(
                 onClick = {
-                    navController.navigate("gameCategory/${player1Name.value}/${player2Name.value}")
+                    navController.navigate("gameCategory/${player1Name.value}/${player2Name.value}/${isMultiplayer}")
                 },
                 shape = RoundedCornerShape(12.dp),
                 enabled = isFormValid,

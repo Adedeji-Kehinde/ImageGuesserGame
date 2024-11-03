@@ -1,3 +1,4 @@
+// GameCategoryPage.kt
 package com.griffith.imageguessergame
 
 import androidx.compose.foundation.Image
@@ -11,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,7 +22,8 @@ import androidx.navigation.NavBackStackEntry
 @Composable
 fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackEntry) {
     val player1Name = backStackEntry.arguments?.getString("player1Name") ?: "Player 1"
-    val player2Name = backStackEntry.arguments?.getString("player2Name") ?: "Player 2"
+    val player2Name = backStackEntry.arguments?.getString("player2Name") ?: ""
+    val isMultiplayer = backStackEntry.arguments?.getBoolean("isMultiplayer") ?: false
 
     Scaffold(
         topBar = {
@@ -44,16 +45,11 @@ fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackE
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "Player 1: $player1Name",
-                fontSize = 24.sp,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-            Text(
-                text = "Player 2: $player2Name",
-                fontSize = 24.sp,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
+
+            Text(text = "Player 1: $player1Name", fontSize = 24.sp)
+            if (isMultiplayer) {
+                Text(text = "Player 2: $player2Name", fontSize = 24.sp)
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -84,12 +80,12 @@ fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackE
 }
 
 @Composable
-fun CategoryBox(navController: NavController, categoryName: String, imageRes: Int, player1Name: String, player2Name: String) {
-
+fun CategoryBox(navController: NavController, categoryName: String, imageRes: Int, player1Name: String, player2Name: String?) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.padding(8.dp)
     ) {
+        // Fixed-size Category Box with Image
         Box(
             modifier = Modifier
                 .size(120.dp)
@@ -99,11 +95,11 @@ fun CategoryBox(navController: NavController, categoryName: String, imageRes: In
             Image(
                 painter = painterResource(id = imageRes),
                 contentDescription = categoryName,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+                modifier = Modifier.size(100.dp) // Adjust image size within the box
             )
         }
 
+        // Display the category name below the image
         Text(
             text = categoryName,
             fontSize = 18.sp,
@@ -112,8 +108,17 @@ fun CategoryBox(navController: NavController, categoryName: String, imageRes: In
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Button below the box with fixed width
         Button(
-            onClick = { navController.navigate("gameScreen/$categoryName/$player1Name/$player2Name") },
+            onClick = {
+                // Navigate to the game screen with the selected category and player names
+                val route = if (player2Name != null) {
+                    "gameScreen/$categoryName/$player1Name/$player2Name"
+                } else {
+                    "gameScreen/$categoryName/$player1Name"
+                }
+                navController.navigate(route)
+            },
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier.width(120.dp)
         ) {

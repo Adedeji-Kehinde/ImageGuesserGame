@@ -2,7 +2,6 @@
 package com.griffith.imageguessergame
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -30,13 +29,17 @@ fun NavGraph() {
 
         // Navigate to game category page
         composable(
-            "gameCategory/{player1Name}/{player2Name}",
+            "gameCategory/{player1Name}/{player2Name}/{isMultiplayer}",
             arguments = listOf(
                 navArgument("player1Name") { type = NavType.StringType },
-                navArgument("player2Name") { type = NavType.StringType }
+                navArgument("player2Name") { type = NavType.StringType; defaultValue = "" },
+                navArgument("isMultiplayer") { type = NavType.BoolType }
             )
         ) { backStackEntry ->
-            GameCategoryPage(navController, backStackEntry)
+            GameCategoryPage(
+                navController = navController,
+                backStackEntry = backStackEntry
+            )
         }
 
         // Navigate to game screen
