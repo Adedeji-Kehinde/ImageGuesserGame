@@ -1,4 +1,3 @@
-// GameScreenPage.kt
 package com.griffith.imageguessergame
 
 import androidx.compose.foundation.Image
@@ -9,12 +8,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavBackStackEntry
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,10 +45,10 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
     var playerGuess by remember { mutableStateOf("") }
     var feedbackMessage by remember { mutableStateOf("") }
     var attemptCount by remember { mutableStateOf(0) }
-    var showAnswer by remember { mutableStateOf(false) }
     var score1 by remember { mutableStateOf(0) }
     var score2 by remember { mutableStateOf(0) }
     var currentPlayer by remember { mutableStateOf(1) } // 1 for Player 1, 2 for Player 2
+    var blurRadius by remember { mutableStateOf(10.dp) } // Initial blur radius
 
     val (currentImage, correctAnswer) = images[currentImageIndex]
 
@@ -63,10 +63,8 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
             playerGuess = ""
             feedbackMessage = ""
             attemptCount = 0
-            showAnswer = false
-
-            // Switch players
-            currentPlayer = if (currentPlayer == 1) 2 else 1
+            blurRadius = 10.dp // Reset blur for the next image
+            currentPlayer = if (currentPlayer == 1) 2 else 1 // Switch players
         }
     }
 
@@ -85,13 +83,18 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
                 }
                 nextImage()
             }
-            attemptCount < 1 -> {
+            attemptCount == 0 -> {
                 attemptCount++
+                blurRadius = 5.dp // Reduce blur by 50%
                 feedbackMessage = "Try again!"
             }
+            attemptCount == 1 -> {
+                attemptCount++
+                blurRadius = 0.dp // Remove blur completely
+            }
             else -> {
-                feedbackMessage = "Wrong! The answer was $answer."
-                showAnswer = true
+                feedbackMessage = "Moving to the next image!"
+                nextImage()
             }
         }
     }
@@ -126,46 +129,40 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
                 fontSize = 20.sp
             )
 
-            if (showAnswer) {
-                Text(text = "Answer: $correctAnswer", fontSize = 24.sp)
-                LaunchedEffect(Unit) {
-                    delay(3000)
-                    nextImage()
-                }
-            } else {
-                Image(
-                    painter = painterResource(id = currentImage),
-                    contentDescription = correctAnswer,
-                    modifier = Modifier
-                        .size(200.dp)
-                        .padding(bottom = 16.dp)
-                )
+            Image(
+                painter = painterResource(id = currentImage),
+                contentDescription = correctAnswer,
+                modifier = Modifier
+                    .size(200.dp)
+                    .padding(bottom = 16.dp)
+                    .graphicsLayer { alpha = 0.8f }
+                    .blur(blurRadius) // Apply the progressive blur effect
+            )
 
-                Text(text = "Guess the $categoryName!", fontSize = 18.sp)
+            Text(text = "Guess the $categoryName!", fontSize = 18.sp)
 
-                Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-                TextField(
-                    value = playerGuess,
-                    onValueChange = { playerGuess = it },
-                    label = { Text("Enter your guess") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            TextField(
+                value = playerGuess,
+                onValueChange = { playerGuess = it },
+                label = { Text("Enter your guess") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
 
-                Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-                Button(onClick = {
-                    checkGuess(playerGuess, correctAnswer)
-                }) {
-                    Text(text = "Submit Guess")
-                }
+            Button(onClick = {
+                checkGuess(playerGuess, correctAnswer)
+            }) {
+                Text(text = "Submit Guess")
+            }
 
-                Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-                if (attemptCount > 0) {
-                    Text(text = feedbackMessage, fontSize = 18.sp)
-                }
+            if (attemptCount > 0) {
+                Text(text = feedbackMessage, fontSize = 18.sp)
             }
         }
     }
