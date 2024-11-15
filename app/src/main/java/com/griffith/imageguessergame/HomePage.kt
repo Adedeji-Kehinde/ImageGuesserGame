@@ -1,14 +1,15 @@
 package com.griffith.imageguessergame
 
-import androidx.compose.foundation.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,23 +22,27 @@ import androidx.navigation.NavController
 
 @Composable
 fun HomePage(navController: NavController) {
-    // Create a scrollable column to ensure smooth navigation
-    val scrollState = rememberScrollState()
-
     // Background gradient for a playful look
     val backgroundGradient = Brush.verticalGradient(
         colors = listOf(Color(0xFFFBAB66), Color(0xFFF7418C)) // Warm, vibrant gradient
     )
 
+    // State to manage the display of the "How to Play" dialog
+    var showDialog by remember { mutableStateOf(false) }
+
+    // Show the dialog when showDialog is true
+    if (showDialog) {
+        HowToPlayDialog(onDismiss = { showDialog = false })
+    }
+
     Column(
         modifier = Modifier
             .background(backgroundGradient) // Set background to gradient
-            .verticalScroll(scrollState)
-            .fillMaxSize()
+            .fillMaxSize() // Fill the entire screen
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Circular Game Logo Image with Cropping
+        // Circular Game Logo Image
         Box(
             modifier = Modifier
                 .size(120.dp) // Size of the circular image container
@@ -54,15 +59,15 @@ fun HomePage(navController: NavController) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Start Game Card (Medium Rectangle with playful design)
+        // Start Game Card
         Card(
             onClick = { navController.navigate("selectPlayers") },
             shape = RoundedCornerShape(24.dp),
             modifier = Modifier
                 .fillMaxWidth(0.9f) // Slightly narrower for a centered look
-                .aspectRatio(16 / 7f) // Custom aspect ratio for an engaging shape
+                .aspectRatio(16 / 7f) // Custom aspect ratio for a rectangle
                 .padding(8.dp)
-                .border(2.dp, Color.White, RoundedCornerShape(24.dp)) // White border for emphasis
+                .border(2.dp, Color.White, RoundedCornerShape(24.dp)) // White border
         ) {
             Image(
                 painter = painterResource(id = R.drawable.start_game), // Start Game image
@@ -74,15 +79,15 @@ fun HomePage(navController: NavController) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Leaderboard Card (Large Square with a vibrant design)
+        // Leaderboard Card
         Card(
             onClick = { navController.navigate("leaderboard") },
             shape = RoundedCornerShape(24.dp),
             modifier = Modifier
-                .fillMaxWidth(0.95f) // Almost full width for emphasis
-                .aspectRatio(1f) // Square aspect ratio
+                .fillMaxWidth(0.95f) // Nearly full width
+                .aspectRatio(1f) // Square shape
                 .padding(8.dp)
-                .border(2.dp, Color.White, RoundedCornerShape(24.dp)) // White border for emphasis
+                .border(2.dp, Color.White, RoundedCornerShape(24.dp)) // White border
         ) {
             Image(
                 painter = painterResource(id = R.drawable.leaderboard), // Leaderboard image
@@ -94,22 +99,15 @@ fun HomePage(navController: NavController) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-
-        // How to Play Tooltip/Icon
-        Box(
-            modifier = Modifier
-                .size(56.dp)
-                .background(Color.White, CircleShape)
-                .border(2.dp, Color(0xFFF7418C), CircleShape)
-                .clickable { navController.navigate("howToPlay") } // Navigate to How to Play screen
-                .padding(8.dp),
-            contentAlignment = Alignment.Center
+        // How to Play - Floating Action Button
+        FloatingActionButton(
+            onClick = { showDialog = true },
+            containerColor = Color.White,
+            contentColor = Color(0xFFF7418C) // Match the color theme
         ) {
             Icon(
-                imageVector = Icons.Filled.Info, // Using the default Help icon
-                contentDescription = "How to Play",
-                modifier = Modifier.size(32.dp),
-                tint = Color(0xFFF7418C) // Color to match the design theme
+                imageVector = Icons.Filled.Info, // Help icon
+                contentDescription = "How to Play"
             )
         }
     }
