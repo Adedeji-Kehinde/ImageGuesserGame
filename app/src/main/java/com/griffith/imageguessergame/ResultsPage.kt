@@ -1,15 +1,15 @@
 // ResultsPage.kt
 package com.griffith.imageguessergame
 
+import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -37,15 +37,12 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
         "$player1Name Score: $playerScore1" // Only show the score for single-player
     }
 
+    // Create a context for the share intent
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Game Results") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
+                title = { Text(text = "Game Results") }
             )
         }
     ) { innerPadding ->
@@ -75,9 +72,32 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
             }
 
             Spacer(modifier = Modifier.height(32.dp))
-
+            //Play again button
             Button(onClick = { navController.navigate("HomePage") }) {
                 Text(text = "Play Again")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            //share result button
+            Button(onClick = {
+                // Create the share intent
+                val shareIntent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(
+                        Intent.EXTRA_TEXT,
+                        if (isMultiplayer) {
+                            "$winnerMessage\n$player1Name Score: $playerScore1\n$player2Name Score: $playerScore2\nCan you beat us?"
+                        } else {
+                            "$player1Name scored $playerScore1 points in Image Guesser Game! Can you beat this?"
+                        }
+                    )
+                    type = "text/plain"
+                }
+                // Start the share activity
+                context.startActivity(Intent.createChooser(shareIntent, "Share your game results!"))
+            }) {
+                Text(text = "Share Results")
             }
         }
     }
