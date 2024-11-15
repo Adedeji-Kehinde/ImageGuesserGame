@@ -2,8 +2,10 @@
 package com.griffith.imageguessergame
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -19,6 +21,8 @@ import androidx.navigation.NavController
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerDetailsPage(navController: NavController, isMultiplayer: Boolean) {
+    //scroll incase of tilt
+    val scrollState = rememberScrollState()
     val player1Name = remember { mutableStateOf("") }
     val player2Name = remember { mutableStateOf("") }
     val isFormValid = player1Name.value.isNotBlank() && (!isMultiplayer || player2Name.value.isNotBlank())
@@ -39,7 +43,8 @@ fun PlayerDetailsPage(navController: NavController, isMultiplayer: Boolean) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(scrollState),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

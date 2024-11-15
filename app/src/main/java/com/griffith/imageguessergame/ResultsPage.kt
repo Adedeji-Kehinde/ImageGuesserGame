@@ -2,6 +2,8 @@
 package com.griffith.imageguessergame
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -16,6 +18,8 @@ import androidx.navigation.NavBackStackEntry
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry) {
+    //scroll incase of tilt
+    val scrollState = rememberScrollState()
     val playerScore1 = backStackEntry.arguments?.getString("playerScore")?.toInt() ?: 0
     val playerScore2 = backStackEntry.arguments?.getString("playerScore2")?.toInt() ?: 0
     val player1Name = backStackEntry.arguments?.getString("player1Name") ?: "Player 1"
@@ -49,7 +53,8 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(scrollState),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
