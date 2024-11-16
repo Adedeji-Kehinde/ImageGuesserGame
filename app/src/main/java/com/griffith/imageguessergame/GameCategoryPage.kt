@@ -1,8 +1,8 @@
-// GameCategoryPage.kt
 package com.griffith.imageguessergame
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,9 +13,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -24,11 +29,14 @@ import androidx.navigation.NavBackStackEntry
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackEntry) {
-    //scroll incase of tilt
     val scrollState = rememberScrollState()
     val player1Name = backStackEntry.arguments?.getString("player1Name") ?: "Player 1"
     val player2Name = backStackEntry.arguments?.getString("player2Name") ?: ""
     val isMultiplayer = backStackEntry.arguments?.getBoolean("isMultiplayer") ?: false
+
+    val backgroundGradient = Brush.verticalGradient(
+        colors = listOf(Color(0xFF4E54C8), Color(0xFF8F94FB))
+    )
 
     Scaffold(
         topBar = {
@@ -36,100 +44,144 @@ fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackE
                 title = {},
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                modifier = Modifier.background(backgroundGradient)
             )
-        }
+        },
+        containerColor = Color.Transparent
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(backgroundGradient)
                 .padding(innerPadding)
-                .padding(16.dp)
-                .verticalScroll(scrollState),
-            verticalArrangement = Arrangement.Top,
+                .verticalScroll(scrollState)
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            Text(text = "Player 1: $player1Name", fontSize = 24.sp)
+            // Player Info
             if (isMultiplayer) {
-                Text(text = "Player 2: $player2Name", fontSize = 24.sp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    PlayerBox(playerName = player1Name, backgroundColor = Color(0xFF4E54C8))
+                    PlayerBox(playerName = player2Name, backgroundColor = Color(0xFF4E54C8))
+                }
+            } else {
+                PlayerBox(playerName = player1Name, backgroundColor = Color(0xFF4E54C8))
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Center the category boxes and buttons in the screen
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                ) {
-                    CategoryBox(navController, "Animals", R.drawable.animals_image, player1Name, player2Name)
-                    CategoryBox(navController, "Logos", R.drawable.logos_image, player1Name, player2Name)
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                ) {
-                    CategoryBox(navController, "Fruits", R.drawable.fruits_image, player1Name, player2Name)
-                    CategoryBox(navController, "Random", R.drawable.random_image, player1Name, player2Name)
-                }
-            }
+            // "Choose a category" Text
+            Text(
+                text = "Choose a category",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            // Categories in separate rows with Play button below
+            CategoryBoxWithButton(navController, "Animals", R.drawable.animals_image, player1Name, player2Name)
+            Spacer(modifier = Modifier.height(16.dp))
+            CategoryBoxWithButton(navController, "Logos", R.drawable.logos_image, player1Name, player2Name)
+            Spacer(modifier = Modifier.height(16.dp))
+            CategoryBoxWithButton(navController, "Fruits", R.drawable.fruits_image, player1Name, player2Name)
+            Spacer(modifier = Modifier.height(16.dp))
+            CategoryBoxWithButton(navController, "Random", R.drawable.random_image, player1Name, player2Name)
         }
     }
 }
 
 @Composable
-fun CategoryBox(navController: NavController, categoryName: String, imageRes: Int, player1Name: String, player2Name: String?) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(8.dp)
+fun PlayerBox(playerName: String, backgroundColor: Color) {
+    Box(
+        modifier = Modifier
+            .size(100.dp)
+            .background(backgroundColor, shape = RoundedCornerShape(16.dp))
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
     ) {
-        // Fixed-size Category Box with Image
+        Text(
+            text = playerName,
+            fontSize = 18.sp,
+            color = Color.White,
+            style = TextStyle(fontWeight = FontWeight.Bold) // Custom text style
+        )
+    }
+}
+
+@Composable
+fun CategoryBoxWithButton(navController: NavController, categoryName: String, imageRes: Int, player1Name: String, player2Name: String?) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .shadow(10.dp, RoundedCornerShape(16.dp)) // Shadow for depth
+            .background(Color.White, shape = RoundedCornerShape(16.dp)) // White background for the whole box
+            .clickable {
+                // Handle navigation with category and player details
+                val route = if (player2Name == null) {
+                    "gameScreen/$categoryName/$player1Name"
+                } else {
+                    "gameScreen/$categoryName/$player1Name/$player2Name"
+                }
+                navController.navigate(route)
+            },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Box(
             modifier = Modifier
-                .size(120.dp)
-                .background(Color.LightGray, shape = RoundedCornerShape(8.dp)),
+                .fillMaxWidth()
+                .height(250.dp)
+                .background(Color.Gray, shape = RoundedCornerShape(16.dp)) // Background with rounded edges
+                .clip(RoundedCornerShape(16.dp)), // Ensures the image fits the rounded corners
             contentAlignment = Alignment.Center
         ) {
             Image(
                 painter = painterResource(id = imageRes),
                 contentDescription = categoryName,
-                modifier = Modifier.fillMaxSize(), // Make image fill the box
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize() // Make image fill the whole box
+            )
+            // Text overlay on top of the image
+            Text(
+                text = categoryName,
+                fontSize = 24.sp,
+                color = Color.White,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .background(Color.Black.copy(alpha = 0.5f), shape = RoundedCornerShape(8.dp))
+                    .padding(8.dp)
             )
         }
 
-        // Display the category name below the image
-        Text(
-            text = categoryName,
-            fontSize = 18.sp,
-            modifier = Modifier.padding(vertical = 4.dp)
-        )
+        Spacer(modifier = Modifier.height(12.dp))
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Button below the box with fixed width
+        // Play Button below the category box
         Button(
             onClick = {
-                // Navigate to the game screen with the selected category and player names
-                val route = if (player2Name != null) {
-                    "gameScreen/$categoryName/$player1Name/$player2Name"
-                } else {
+                // Navigate to the game screen with selected category and player names
+                val route = if (player2Name == null) {
                     "gameScreen/$categoryName/$player1Name"
+                } else {
+                    "gameScreen/$categoryName/$player1Name/$player2Name"
                 }
                 navController.navigate(route)
             },
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier.width(120.dp)
+            shape = RoundedCornerShape(50.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .height(50.dp)
         ) {
-            Text(text = "Play", fontSize = 16.sp)
+            Text(text = "Play Now", fontSize = 18.sp)
         }
     }
 }
+
