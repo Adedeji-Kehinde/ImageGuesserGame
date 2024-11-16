@@ -24,7 +24,7 @@ import androidx.navigation.NavController
 fun HomePage(navController: NavController) {
     // Background gradient for a playful look
     val backgroundGradient = Brush.verticalGradient(
-        colors = listOf(Color(0xFFFBAB66), Color(0xFFF7418C)) // Warm, vibrant gradient
+        colors = listOf(Color(0xFF4E54C8), Color(0xFF8F94FB))
     )
 
     // State to manage the display of the "How to Play" dialog
