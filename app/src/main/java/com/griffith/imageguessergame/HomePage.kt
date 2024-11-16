@@ -22,7 +22,6 @@ import androidx.navigation.NavController
 
 @Composable
 fun HomePage(navController: NavController) {
-    // Background gradient for a playful look
     val backgroundGradient = Brush.verticalGradient(
         colors = listOf(Color(0xFF4E54C8), Color(0xFF8F94FB))
     )
@@ -47,7 +46,6 @@ fun HomePage(navController: NavController) {
             modifier = Modifier
                 .size(120.dp) // Size of the circular image container
                 .clip(CircleShape) // Clip the image to a circle
-                .background(Color.LightGray) // Optional background color
         ) {
             Image(
                 painter = painterResource(id = R.drawable.game_logo), // Replace with your game logo resource

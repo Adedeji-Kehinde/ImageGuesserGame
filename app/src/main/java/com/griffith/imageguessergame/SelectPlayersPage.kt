@@ -24,7 +24,6 @@ import androidx.navigation.NavController
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectPlayersPage(navController: NavController) {
-    // Enhanced Background: A vibrant gradient
     val backgroundGradient = Brush.linearGradient(
         colors = listOf(Color(0xFF4E54C8), Color(0xFF8F94FB))
     )
