@@ -9,13 +9,21 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -26,7 +34,6 @@ import androidx.navigation.NavBackStackEntry
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEntry) {
-    //scroll incase of tilt
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val sensorManager = remember { context.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
@@ -37,7 +44,6 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
     val player2Name = backStackEntry.arguments?.getString("player2Name") ?: "Player 2"
     val isMultiplayer = player2Name.isNotBlank()
 
-    // Use the new function to get images
     val images = remember { getImagesForCategory(categoryName) }
 
     var currentImageIndex by remember { mutableStateOf(0) }
@@ -49,25 +55,25 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
     var currentPlayer by remember { mutableStateOf(1) }
     var blurRadius by remember { mutableStateOf(10.dp) }
     var canGuess by remember { mutableStateOf(true) }
+    var isDialogOpen by remember { mutableStateOf(false) }
 
     val (currentImage, correctAnswer) = images[currentImageIndex]
 
-    // Sensor logic to detect shake
     val sensorEventListener = remember {
         object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent?) {
                 event?.let {
                     val (x, y, z) = it.values
                     val shakeMagnitude = Math.sqrt((x * x + y * y + z * z).toDouble())
-                    if (shakeMagnitude > 12) { // Detect a strong shake
+                    if (shakeMagnitude > 12) {
                         if (attemptCount == 1) {
-                            blurRadius = 5.dp // Reduce blur by 50%
+                            blurRadius = 5.dp
                             feedbackMessage = "Blur reduced! Try guessing again."
                         } else if (attemptCount == 2) {
-                            blurRadius = 0.dp // Remove blur completely
+                            blurRadius = 0.dp
                             feedbackMessage = "Blur removed! Try guessing again."
                         }
-                        canGuess = true // Allow guessing after shake is detected
+                        canGuess = true
                     }
                 }
             }
@@ -75,7 +81,9 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
         }
     }
-
+    val backgroundGradient = Brush.verticalGradient(
+        colors = listOf(Color(0xFF4E54C8), Color(0xFF8F94FB))
+    )
     DisposableEffect(Unit) {
         sensorManager.registerListener(sensorEventListener, accelerometer, SensorManager.SENSOR_DELAY_UI)
         onDispose {
@@ -93,22 +101,38 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
             attemptCount = 0
             blurRadius = 10.dp
             canGuess = true
-            currentPlayer = if (currentPlayer == 1) 2 else 1
+            currentPlayer = if (isMultiplayer) {
+                if (currentPlayer == 1) 2 else 1
+            } else {
+                1 // Single player always has turn as player 1
+            }
         }
     }
 
     fun checkGuess(guess: String, answer: String) {
-        if (!canGuess) return // Prevent guessing if shaking is required
+        if (!canGuess) return
 
         when {
             guess.equals(answer, ignoreCase = true) -> {
                 feedbackMessage = "Correct! 🎉"
                 if (attemptCount == 0) {
-                    if (currentPlayer == 1) score1 += 10 else score2 += 10
+                    if (isMultiplayer) {
+                        if (currentPlayer == 1) score1 += 10 else score2 += 10
+                    } else {
+                        score1 += 10
+                    }
                 } else if (attemptCount == 1) {
-                    if (currentPlayer == 1) score1 += 5 else score2 += 5
+                    if (isMultiplayer) {
+                        if (currentPlayer == 1) score1 += 5 else score2 += 5
+                    } else {
+                        score1 += 5
+                    }
                 } else {
-                    if (currentPlayer == 1) score1 += 2 else score2 += 2
+                    if (isMultiplayer) {
+                        if (currentPlayer == 1) score1 += 2 else score2 += 2
+                    } else {
+                        score1 += 2
+                    }
                 }
                 nextImage()
             }
@@ -133,37 +157,47 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
         topBar = {
             TopAppBar(
                 title = { Text(text = "Guess the $categoryName") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                actions = {
+                    IconButton(onClick = { isDialogOpen = true }) {
+                        Icon(Icons.Filled.Menu, contentDescription = "Menu", tint = Color.Black)
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent
+                ),
+                modifier = Modifier.background(backgroundGradient)
             )
-        }
+        },
+        containerColor = Color.Transparent
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .background(backgroundGradient)
                 .padding(16.dp)
                 .verticalScroll(scrollState),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = if (isMultiplayer) {
-                    "It's ${if (currentPlayer == 1) player1Name else player2Name}'s turn!"
-                } else {
-                    "$player1Name, it's your turn!"
-                },
-                fontSize = 20.sp
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                PlayerScoreBox(playerName = player1Name, score = score1, isCurrentPlayer = !isMultiplayer || currentPlayer == 1)
+
+                if (isMultiplayer) {
+                    PlayerScoreBox(playerName = player2Name, score = score2, isCurrentPlayer = currentPlayer == 2)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             Image(
                 painter = painterResource(id = currentImage),
                 contentDescription = correctAnswer,
                 modifier = Modifier
-                    .size(200.dp)
+                    .size(300.dp)
                     .padding(bottom = 16.dp)
                     .blur(blurRadius)
             )
@@ -178,14 +212,14 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
                 label = { Text("Enter your guess") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = canGuess // Disable input when a shake is required
+                enabled = canGuess
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = { checkGuess(playerGuess, correctAnswer) },
-                enabled = canGuess // Disable button when a shake is required
+                enabled = canGuess
             ) {
                 Text(text = "Submit Guess")
             }
@@ -195,6 +229,109 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
             if (feedbackMessage.isNotEmpty()) {
                 Text(text = feedbackMessage, fontSize = 18.sp)
             }
+
+            // Show pause dialog
+            if (isDialogOpen) {
+                AlertDialog(
+                    onDismissRequest = { isDialogOpen = false },
+                    title = { Text(text = "Game Paused") },
+                    text = {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            // Restart Icon and Description
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        // Restart the game
+                                        score1 = 0
+                                        score2 = 0
+                                        currentImageIndex = 0
+                                        playerGuess = ""
+                                        feedbackMessage = ""
+                                        attemptCount = 0
+                                        blurRadius = 10.dp
+                                        canGuess = true
+                                        currentPlayer = 1
+                                        isDialogOpen = false
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = "Restart Game",
+                                        tint = Color.Black
+                                    )
+                                }
+                                Text(text = "Restart", fontSize = 12.sp)
+                            }
+
+                            // Quit Icon and Description
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        // Quit the game
+                                        navController.popBackStack()
+                                        isDialogOpen = false
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                        contentDescription = "Quit Game",
+                                        tint = Color.Black
+                                    )
+                                }
+                                Text(text = "Quit", fontSize = 12.sp)
+                            }
+
+                            // Resume Icon and Description
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                IconButton(
+                                    onClick = { isDialogOpen = false }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = "Resume Game",
+                                        tint = Color.Black
+                                    )
+                                }
+                                Text(text = "Resume", fontSize = 12.sp)
+                            }
+                        }
+                    },
+                    confirmButton = {}
+                )
+            }
         }
+    }
+}
+
+@Composable
+fun PlayerScoreBox(playerName: String, score: Int, isCurrentPlayer: Boolean) {
+    val boxColor = if (isCurrentPlayer) Color.Green else Color.Red
+    Column(
+        modifier = Modifier
+            .background(boxColor, shape = RoundedCornerShape(16.dp))
+            .padding(16.dp)
+            .width(150.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = playerName,
+            fontSize = 18.sp,
+            color = Color.White
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Score: $score",
+            fontSize = 16.sp,
+            color = Color.White
+        )
     }
 }
