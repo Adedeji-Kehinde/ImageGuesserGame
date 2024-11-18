@@ -22,7 +22,10 @@ fun NavGraph() {
         composable("selectPlayers") { SelectPlayersPage(navController) }
 
         // Navigate to player details page
-        composable("playerDetails/{isMultiplayer}", arguments = listOf(navArgument("isMultiplayer") { defaultValue = false })) { backStackEntry ->
+        composable(
+            "playerDetails/{isMultiplayer}",
+            arguments = listOf(navArgument("isMultiplayer") { defaultValue = false })
+        ) { backStackEntry ->
             val isMultiplayer = backStackEntry.arguments?.getBoolean("isMultiplayer") ?: false
             PlayerDetailsPage(navController, isMultiplayer)
         }
@@ -59,5 +62,9 @@ fun NavGraph() {
             ResultsPage(navController, backStackEntry)
         }
 
+        //Navigate to leaderboard page
+        composable("leaderboard") {
+            Leaderboard(navController)
+        }
     }
 }
