@@ -47,11 +47,14 @@ fun NavGraph() {
 
         // Navigate to game screen
         composable(
-            "gameScreen/{categoryName}/{player1Name}/{player2Name}",
+            "gameScreen/{categoryName}/{player1Name}/{player2Name}/{imageCount}/{isTimerEnabled}/{timerDuration}",
             arguments = listOf(
                 navArgument("categoryName") { type = NavType.StringType },
                 navArgument("player1Name") { type = NavType.StringType },
-                navArgument("player2Name") { type = NavType.StringType }
+                navArgument("player2Name") { type = NavType.StringType },
+                navArgument("imageCount") { type = NavType.IntType },
+                navArgument("isTimerEnabled") { type = NavType.BoolType },
+                navArgument("timerDuration") { type = NavType.IntType },
             )
         ) { backStackEntry ->
             GameScreenPage(navController, backStackEntry)

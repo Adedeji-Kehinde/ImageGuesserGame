@@ -9,8 +9,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,7 +20,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +33,10 @@ fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackE
     val player1Name = backStackEntry.arguments?.getString("player1Name") ?: "Player 1"
     val player2Name = backStackEntry.arguments?.getString("player2Name") ?: ""
     val isMultiplayer = backStackEntry.arguments?.getBoolean("isMultiplayer") ?: false
+    var isMenuExpanded by remember { mutableStateOf(false) }
+    var imageCount by remember { mutableStateOf(2) } // Default number of pictures
+    var isTimerEnabled by remember { mutableStateOf(false) }
+    var timerDuration  by remember {mutableStateOf(30)}
 
     val backgroundGradient = Brush.verticalGradient(
         colors = listOf(Color(0xFF4E54C8), Color(0xFF8F94FB))
@@ -45,6 +49,58 @@ fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackE
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { isMenuExpanded = true }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
+                    }
+                    DropdownMenu(
+                        expanded = isMenuExpanded,
+                        onDismissRequest = { isMenuExpanded = false }
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(text = "Select Number of Pictures", fontSize = 16.sp, color = Color.Black)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            // Slider for selecting the number of pictures
+                            Slider(
+                                value = imageCount.toFloat(),
+                                onValueChange = { value ->
+                                    // Only allow even numbers
+                                    imageCount = (value / 2).toInt() * 2
+                                },
+                                valueRange = 2f..30f,
+                                steps = 14, // Ensures the slider only snaps to even numbers
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Text(text = "Selected: $imageCount", fontSize = 14.sp, color = Color.Black)
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Timer Enable Radio Button
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(
+                                    selected = isTimerEnabled,
+                                    onClick = {
+                                        isTimerEnabled = !isTimerEnabled
+                                    }
+                                )
+                                Text(text = "Enable Timer", fontSize = 14.sp, color = Color.Black)
+                            }
+                            if(isTimerEnabled){
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(text = "Timer Duration (seconds)", fontSize = 16.sp, color = Color.Black)
+                                Slider(
+                                    value = timerDuration.toFloat(),
+                                    onValueChange = { value ->
+                                        timerDuration = value.toInt()
+                                    },
+                                    valueRange = 10f..50f,
+                                    steps = 40,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                Text(text = "Selected: $timerDuration seconds", fontSize = 14.sp, color = Color.Black)
+                            }
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
@@ -87,13 +143,13 @@ fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackE
             )
 
             // Categories in separate rows with Play button below
-            CategoryBoxWithButton(navController, "Animals", R.drawable.animals_image, player1Name, player2Name)
+            CategoryBoxWithButton(navController, "Animals", R.drawable.animals_image, player1Name, player2Name, imageCount, isTimerEnabled, timerDuration)
             Spacer(modifier = Modifier.height(16.dp))
-            CategoryBoxWithButton(navController, "Logos", R.drawable.logos_image, player1Name, player2Name)
+            CategoryBoxWithButton(navController, "Logos", R.drawable.logos_image, player1Name, player2Name, imageCount, isTimerEnabled, timerDuration)
             Spacer(modifier = Modifier.height(16.dp))
-            CategoryBoxWithButton(navController, "Fruits", R.drawable.fruits_image, player1Name, player2Name)
+            CategoryBoxWithButton(navController, "Fruits", R.drawable.fruits_image, player1Name, player2Name, imageCount, isTimerEnabled, timerDuration)
             Spacer(modifier = Modifier.height(16.dp))
-            CategoryBoxWithButton(navController, "Random", R.drawable.random_image, player1Name, player2Name)
+            CategoryBoxWithButton(navController, "Random", R.drawable.random_image, player1Name, player2Name, imageCount, isTimerEnabled, timerDuration)
         }
     }
 }
@@ -111,25 +167,25 @@ fun PlayerBox(playerName: String, backgroundColor: Color) {
             text = playerName,
             fontSize = 18.sp,
             color = Color.White,
-            style = TextStyle(fontWeight = FontWeight.Bold) // Custom text style
+            fontWeight = FontWeight.Bold
         )
     }
 }
 
 @Composable
-fun CategoryBoxWithButton(navController: NavController, categoryName: String, imageRes: Int, player1Name: String, player2Name: String?) {
+fun CategoryBoxWithButton(navController: NavController, categoryName: String, imageRes: Int, player1Name: String, player2Name: String?, imageCount: Int, isTimerEnabled: Boolean, timerDuration: Int) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .shadow(10.dp, RoundedCornerShape(16.dp)) // Shadow for depth
-            .background(Color.White, shape = RoundedCornerShape(16.dp)) // White background for the whole box
+            .shadow(10.dp, RoundedCornerShape(16.dp))
+            .background(Color.White, shape = RoundedCornerShape(16.dp))
             .clickable {
-                // Handle navigation with category and player details
+                // Navigate with category and player details
                 val route = if (player2Name == null) {
-                    "gameScreen/$categoryName/$player1Name"
+                    "gameScreen/$categoryName/$player1Name/$imageCount/$isTimerEnabled/$timerDuration"
                 } else {
-                    "gameScreen/$categoryName/$player1Name/$player2Name"
+                    "gameScreen/$categoryName/$player1Name/$player2Name/$imageCount/$isTimerEnabled/$timerDuration"
                 }
                 navController.navigate(route)
             },
@@ -139,17 +195,16 @@ fun CategoryBoxWithButton(navController: NavController, categoryName: String, im
             modifier = Modifier
                 .fillMaxWidth()
                 .height(250.dp)
-                .background(Color.Gray, shape = RoundedCornerShape(16.dp)) // Background with rounded edges
-                .clip(RoundedCornerShape(16.dp)), // Ensures the image fits the rounded corners
+                .background(Color.Gray, shape = RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center
         ) {
             Image(
                 painter = painterResource(id = imageRes),
                 contentDescription = categoryName,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize() // Make image fill the whole box
+                modifier = Modifier.fillMaxSize()
             )
-            // Text overlay on top of the image
             Text(
                 text = categoryName,
                 fontSize = 24.sp,
@@ -163,14 +218,13 @@ fun CategoryBoxWithButton(navController: NavController, categoryName: String, im
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Play Button below the category box
+        // Play Button
         Button(
             onClick = {
-                // Navigate to the game screen with selected category and player names
                 val route = if (player2Name == null) {
-                    "gameScreen/$categoryName/$player1Name"
+                    "gameScreen/$categoryName/$player1Name/$imageCount/$isTimerEnabled/$timerDuration"
                 } else {
-                    "gameScreen/$categoryName/$player1Name/$player2Name"
+                    "gameScreen/$categoryName/$player1Name/$player2Name/$imageCount/$isTimerEnabled/$timerDuration"
                 }
                 navController.navigate(route)
             },
@@ -184,4 +238,3 @@ fun CategoryBoxWithButton(navController: NavController, categoryName: String, im
         }
     }
 }
-

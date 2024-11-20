@@ -44,7 +44,13 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
     val player2Name = backStackEntry.arguments?.getString("player2Name") ?: "Player 2"
     val isMultiplayer = player2Name.isNotBlank()
 
-    val images = remember { getImagesForCategory(categoryName) }
+    // Retrieve the slider value from the arguments
+    val imageCount = backStackEntry.arguments?.getInt("imageCount") ?: 2
+    val isTimerEnabled = backStackEntry.arguments?.getBoolean("isTimerEnabled") ?: false
+    val timerDuration = backStackEntry.arguments?.getInt("timerDuration") ?: 30
+
+    // Fetch images and limit them to the selected amount
+    val images = remember { getImagesForCategory(categoryName).take(imageCount) }
 
     var currentImageIndex by remember { mutableStateOf(0) }
     var playerGuess by remember { mutableStateOf("") }
@@ -57,8 +63,14 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
     var canGuess by remember { mutableStateOf(true) }
     var isDialogOpen by remember { mutableStateOf(false) }
 
+    // Timer State
+    var timeLeft by remember { mutableStateOf(timerDuration) }
+    var isTimeUp by remember { mutableStateOf(false) }
+
+
     val (currentImage, correctAnswer) = images[currentImageIndex]
 
+    // Sensor event listener for shake detection
     val sensorEventListener = remember {
         object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent?) {
@@ -105,6 +117,23 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
                 if (currentPlayer == 1) 2 else 1
             } else {
                 1 // Single player always has turn as player 1
+            }
+        }
+    }
+
+    // Timer Effect
+    LaunchedEffect(currentImageIndex, isTimerEnabled) {
+        if (isTimerEnabled) {
+            timeLeft = timerDuration // Reset the timer every time the image changes
+            isTimeUp = false
+            while (timeLeft > 0 && !isTimeUp) {
+                kotlinx.coroutines.delay(1000L)
+                timeLeft--
+            }
+            if (timeLeft <= 0) {
+                isTimeUp = true
+                feedbackMessage = "Time's up! Moving to the next image."
+                nextImage()
             }
         }
     }
@@ -192,6 +221,12 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            // Timer Display
+            if (isTimerEnabled) {
+                Text(text = "Time Left: $timeLeft seconds", fontSize = 18.sp, color = Color.White)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             Image(
                 painter = painterResource(id = currentImage),
@@ -311,7 +346,6 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
         }
     }
 }
-
 @Composable
 fun PlayerScoreBox(playerName: String, score: Int, isCurrentPlayer: Boolean) {
     val boxColor = if (isCurrentPlayer) Color.Green else Color.Red
