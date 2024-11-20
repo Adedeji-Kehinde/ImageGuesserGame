@@ -67,6 +67,7 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
     // Timer State
     var timeLeft by remember { mutableIntStateOf(timerDuration) }
     var isTimeUp by remember { mutableStateOf(false) }
+    var isTimerRunning by remember { mutableStateOf(false) }
 
 
     val (currentImage, correctAnswer) = images[currentImageIndex]
@@ -188,7 +189,11 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
             TopAppBar(
                 title = { Text(text = "Guess the $categoryName") },
                 actions = {
-                    IconButton(onClick = { isDialogOpen = true }) {
+                    IconButton(onClick = {
+                        isTimerRunning = false
+                        isDialogOpen = true
+
+                    }) {
                         Icon(Icons.Filled.Menu, contentDescription = "Menu", tint = Color.Black)
                     }
                 },
@@ -269,7 +274,11 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
             // Show pause dialog
             if (isDialogOpen) {
                 AlertDialog(
-                    onDismissRequest = { isDialogOpen = false },
+                    onDismissRequest = {
+                        isDialogOpen = false
+                        isTimerRunning = true
+
+                                       },
                     title = { Text(text = "Game Paused") },
                     text = {
                         Row(
@@ -293,6 +302,9 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
                                         canGuess = true
                                         currentPlayer = 1
                                         isDialogOpen = false
+                                        timeLeft = timerDuration
+                                        isTimeUp = false
+                                        isTimerRunning = true
                                     }
                                 ) {
                                     Icon(
@@ -329,7 +341,10 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 IconButton(
-                                    onClick = { isDialogOpen = false }
+                                    onClick = {
+                                        isDialogOpen = false
+                                        isTimerRunning = true
+                                    }
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.PlayArrow,

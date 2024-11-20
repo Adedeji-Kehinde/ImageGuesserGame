@@ -17,7 +17,6 @@ data class PlayerScore(val name: String, var points: Int)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun  Leaderboard(navController: NavController) {
-    // Sample leaderboard data (in a real app, you might load this from a database or shared preferences)
     val leaderboard = remember { mutableStateListOf<PlayerScore>() }
 
     // Function to update the leaderboard with new points
@@ -30,7 +29,7 @@ fun  Leaderboard(navController: NavController) {
         }
     }
 
-    // Mock: Adding some sample data (replace this with your actual game data logic)
+    // Mock: Adding some sample data
     LaunchedEffect(Unit) {
         updateLeaderboard("Player 1", 100)
         updateLeaderboard("Player 2", 50)

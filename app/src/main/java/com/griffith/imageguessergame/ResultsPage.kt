@@ -91,7 +91,7 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
 
             // "Play Again" button with icon
             Button(
-                onClick = { navController.navigate("HomePage") },
+                onClick = { navController.navigate("gameCategory/${player1Name}/${player2Name}/${isMultiplayer}") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
