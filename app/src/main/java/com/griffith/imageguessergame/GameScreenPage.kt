@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavBackStackEntry
+import kotlin.math.sqrt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,25 +47,25 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
 
     // Retrieve the slider value from the arguments
     val imageCount = backStackEntry.arguments?.getInt("imageCount") ?: 2
-    val isTimerEnabled = backStackEntry.arguments?.getBoolean("isTimerEnabled") ?: false
+    val isTimerEnabled = backStackEntry.arguments?.getBoolean("isTimerEnabled") == true
     val timerDuration = backStackEntry.arguments?.getInt("timerDuration") ?: 30
 
     // Fetch images and limit them to the selected amount
     val images = remember { getImagesForCategory(categoryName).take(imageCount) }
 
-    var currentImageIndex by remember { mutableStateOf(0) }
+    var currentImageIndex by remember { mutableIntStateOf(0) }
     var playerGuess by remember { mutableStateOf("") }
     var feedbackMessage by remember { mutableStateOf("") }
-    var attemptCount by remember { mutableStateOf(0) }
-    var score1 by remember { mutableStateOf(0) }
-    var score2 by remember { mutableStateOf(0) }
-    var currentPlayer by remember { mutableStateOf(1) }
+    var attemptCount by remember { mutableIntStateOf(0) }
+    var score1 by remember { mutableIntStateOf(0) }
+    var score2 by remember { mutableIntStateOf(0) }
+    var currentPlayer by remember { mutableIntStateOf(1) }
     var blurRadius by remember { mutableStateOf(10.dp) }
     var canGuess by remember { mutableStateOf(true) }
     var isDialogOpen by remember { mutableStateOf(false) }
 
     // Timer State
-    var timeLeft by remember { mutableStateOf(timerDuration) }
+    var timeLeft by remember { mutableIntStateOf(timerDuration) }
     var isTimeUp by remember { mutableStateOf(false) }
 
 
@@ -76,7 +77,7 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
             override fun onSensorChanged(event: SensorEvent?) {
                 event?.let {
                     val (x, y, z) = it.values
-                    val shakeMagnitude = Math.sqrt((x * x + y * y + z * z).toDouble())
+                    val shakeMagnitude = sqrt((x * x + y * y + z * z).toDouble())
                     if (shakeMagnitude > 12) {
                         if (attemptCount == 1) {
                             blurRadius = 5.dp
