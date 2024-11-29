@@ -1,4 +1,3 @@
-// ResultsPage.kt
 package com.griffith.imageguessergame
 
 import android.content.Intent
@@ -29,10 +28,43 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
     val playerScore1 = backStackEntry.arguments?.getString("playerScore")?.toInt() ?: 0
     val playerScore2 = backStackEntry.arguments?.getString("playerScore2")?.toInt() ?: 0
     val player1Name = backStackEntry.arguments?.getString("player1Name") ?: "Player 1"
-    val player2Name = backStackEntry.arguments?.getString("player2Name") ?: "Player 2"
+    val player2Name = backStackEntry.arguments?.getString("player2Name") ?: ""
     val isMultiplayer = player2Name.isNotBlank()
 
-    // Determine the winner or if it's a tie
+    // Database manager instance
+    val context = LocalContext.current
+    val databaseManager = DatabaseManager(context)
+
+    if (isMultiplayer) {
+        // Multiplayer: Update scores and results for both players
+        val resultPlayer1 = when {
+            playerScore1 > playerScore2 -> "win"
+            playerScore1 < playerScore2 -> "loss"
+            else -> "tie"
+        }
+
+        val resultPlayer2 = when {
+            playerScore2 > playerScore1 -> "win"
+            playerScore2 < playerScore1 -> "loss"
+            else -> "tie"
+        }
+
+        // Update both players' scores and stats in the database
+        LaunchedEffect(player1Name, playerScore1) {
+            databaseManager.insertOrUpdatePlayerScore(player1Name, playerScore1, resultPlayer1)
+        }
+
+        LaunchedEffect(player2Name, playerScore2) {
+            databaseManager.insertOrUpdatePlayerScore(player2Name, playerScore2, resultPlayer2)
+        }
+    } else {
+        // Single Player: Only update the player's total points and games played
+        LaunchedEffect(player1Name, playerScore1) {
+            databaseManager.insertOrUpdatePlayerScore(player1Name, playerScore1, "null")
+        }
+    }
+
+    // Determine the winner or result message
     val winnerMessage = if (isMultiplayer) {
         when {
             playerScore1 > playerScore2 -> "$player1Name Wins!"
@@ -40,11 +72,8 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
             else -> "It's a Tie!"
         }
     } else {
-        "$player1Name Score: $playerScore1"
+        "$player1Name scored $playerScore1 points!"
     }
-
-    // Context for sharing results
-    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -63,6 +92,7 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Title
             Text(
                 text = "Results",
                 fontSize = 28.sp,
@@ -72,26 +102,29 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(text = "$player1Name Score: $playerScore1", fontSize = 20.sp)
+            // Player scores
+            Text(text = "$player1Name: $playerScore1 points", fontSize = 20.sp)
             if (isMultiplayer) {
-                Text(text = "$player2Name Score: $playerScore2", fontSize = 20.sp)
+                Text(text = "$player2Name: $playerScore2 points", fontSize = 20.sp)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Display winner or single-player score message
+            // Winner or result message
             Text(
                 text = winnerMessage,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF03DAC5)
+                color = if (winnerMessage.contains("Wins")) Color.Green else Color.Gray
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // "Play Again" button with icon
+            // "Play Again" button
             Button(
-                onClick = { navController.navigate("gameCategory/${player1Name}/${player2Name}/${isMultiplayer}") },
+                onClick = {
+                    navController.navigate("gameCategory/${player1Name}/${player2Name}/${isMultiplayer}")
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
@@ -104,7 +137,7 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // "Share Results" button with icon
+            // "Share Results" button
             Button(
                 onClick = {
                     val shareIntent = Intent().apply {
@@ -112,7 +145,7 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
                         putExtra(
                             Intent.EXTRA_TEXT,
                             if (isMultiplayer) {
-                                "$winnerMessage\n$player1Name Score: $playerScore1\n$player2Name Score: $playerScore2\nCan you beat us?"
+                                "$winnerMessage\n$player1Name: $playerScore1 points\n$player2Name: $playerScore2 points\nCan you beat us?"
                             } else {
                                 "$player1Name scored $playerScore1 points in Image Guesser Game! Can you beat this?"
                             }
@@ -133,7 +166,7 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // "See Leaderboard" button with icon
+            // "See Leaderboard" button
             Button(
                 onClick = { navController.navigate("Leaderboard") },
                 modifier = Modifier

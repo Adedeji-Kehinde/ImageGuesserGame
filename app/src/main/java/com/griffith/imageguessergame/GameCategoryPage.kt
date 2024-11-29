@@ -34,7 +34,7 @@ fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackE
     val player2Name = backStackEntry.arguments?.getString("player2Name") ?: ""
     val isMultiplayer = backStackEntry.arguments?.getBoolean("isMultiplayer") ?: false
     var isMenuExpanded by remember { mutableStateOf(false) }
-    var imageCount by remember { mutableStateOf(10) } // Default number of pictures
+    var imageCount by remember { mutableStateOf(2) } // Default number of pictures
     var isTimerEnabled by remember { mutableStateOf(false) }
     var timerDuration  by remember {mutableStateOf(30)}
 
@@ -45,9 +45,9 @@ fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackE
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {},
+                title = {"Return to select Players"},
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { navController.navigate("selectPlayers") }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
                 },
@@ -69,8 +69,8 @@ fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackE
                                     // Only allow even numbers
                                     imageCount = (value / 2).toInt() * 2
                                 },
-                                valueRange = 10f..30f,
-                                steps = 10, // Ensures the slider only snaps to even numbers
+                                valueRange = 2f..30f,
+                                steps = 14, // Ensures the slider only snaps to even numbers
                                 modifier = Modifier.fillMaxWidth()
                             )
                             Text(text = "Selected: $imageCount", fontSize = 14.sp, color = Color.Black)

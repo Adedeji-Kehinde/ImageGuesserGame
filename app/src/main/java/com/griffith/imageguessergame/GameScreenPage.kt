@@ -79,7 +79,7 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
                 event?.let {
                     val (x, y, z) = it.values
                     val shakeMagnitude = sqrt((x * x + y * y + z * z).toDouble())
-                    if (shakeMagnitude > 30) {
+                    if (shakeMagnitude > 12) {
                         if (attemptCount == 1) {
                             blurRadius = 5.dp
                             feedbackMessage = "Blur reduced! Try guessing again."
