@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -31,15 +29,17 @@ fun Leaderboard(navController: NavController) {
     val (ascending, setAscending) = remember { mutableStateOf(false) }
 
     // Sort the leaderboard entries based on the selected column and order
-    val sortedEntries = leaderboardEntries.sortedWith(
-        compareBy(
-            { if (sortBy == "Player") it.playerName else null },
-            { if (sortBy == "Total") it.totalPoints else null },
-            { if (sortBy == "Wins") it.wins else null },
-            { if (sortBy == "Losses") it.losses else null },
-            { if (sortBy == "Ties") it.ties else null }
-        )
-    ).let { if (ascending) it else it.reversed() }
+    val sortedEntries = remember(leaderboardEntries, sortBy, ascending) {
+        leaderboardEntries.sortedWith(
+            compareBy(
+                { if (sortBy == "Player") it.playerName else null },
+                { if (sortBy == "Total") it.totalPoints else null },
+                { if (sortBy == "Wins") it.wins else null },
+                { if (sortBy == "Losses") it.losses else null },
+                { if (sortBy == "Ties") it.ties else null }
+            )
+        ).let { if (ascending) it else it.reversed() }
+    }
 
     // Get the top 3 players based on total points
     val top3Players = sortedEntries.sortedByDescending { it.totalPoints }.take(3)
@@ -47,8 +47,8 @@ fun Leaderboard(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Leaderboard") },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF6200EE))
+                title = { Text("Leaderboard", color = Color.White) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF6A1B9A)) // Purple
             )
         }
     ) { innerPadding ->
@@ -61,13 +61,7 @@ fun Leaderboard(navController: NavController) {
         ) {
             // Bar Chart Section (Top 3 Players)
             item {
-                Text(
-                    text = "Top Players by Points",
-                    fontSize = 20.sp,
-                    color = Color(0xFF6200EE),
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                SectionTitle("Top Players by Points")
                 BarChart(
                     data = top3Players.map { it.totalPoints.toFloat() },
                     labels = top3Players.map { it.playerName },
@@ -80,13 +74,7 @@ fun Leaderboard(navController: NavController) {
 
             // Line Graph Section (Dynamic)
             item {
-                Text(
-                    text = "Player Performance Over Time",
-                    fontSize = 20.sp,
-                    color = Color(0xFF6200EE),
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                SectionTitle("Player Performance Over Time")
                 LineGraph(
                     data = sortedEntries.map { it.totalPoints.toFloat() },
                     labels = sortedEntries.map { it.playerName },
@@ -109,6 +97,7 @@ fun Leaderboard(navController: NavController) {
                             text = column,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
+                            color = Color(0xFF9C27B0), // Purple
                             modifier = Modifier.clickable {
                                 // Toggle sorting direction if the same column is clicked
                                 if (sortBy == column) setAscending(!ascending)
@@ -130,11 +119,11 @@ fun Leaderboard(navController: NavController) {
                         .padding(8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = entry.playerName)
-                    Text(text = entry.totalPoints.toString())
-                    Text(text = entry.wins.toString())
-                    Text(text = entry.losses.toString())
-                    Text(text = entry.ties.toString())
+                    Text(text = entry.playerName, color = Color(0xFF9C27B0)) // Purple text
+                    Text(text = entry.totalPoints.toString(), color = Color(0xFF9C27B0))
+                    Text(text = entry.wins.toString(), color = Color(0xFF9C27B0))
+                    Text(text = entry.losses.toString(), color = Color(0xFF9C27B0))
+                    Text(text = entry.ties.toString(), color = Color(0xFF9C27B0))
                 }
             }
 
@@ -144,7 +133,7 @@ fun Leaderboard(navController: NavController) {
                 Button(
                     onClick = { navController.navigate("HomePage") },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0288D1))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9C27B0)) // Purple
                 ) {
                     Text("Back to Home", color = Color.White)
                 }
@@ -175,9 +164,9 @@ fun BarChart(
             // Draw bar
             drawRect(
                 color = when (index) {
-                    0 -> Color(0xFFFFD700) // Gold
-                    1 -> Color(0xFFC0C0C0) // Silver
-                    else -> Color(0xFFCD7F32) // Bronze
+                    0 -> Color(0xFF9C27B0) // Purple
+                    1 -> Color(0xFF8E24AA) // Purple shade
+                    else -> Color(0xFF7B1FA2) // Darker purple
                 },
                 topLeft = Offset(barCenterX - barWidth / 2, size.height - barHeight - 40.dp.toPx()),
                 size = androidx.compose.ui.geometry.Size(barWidth, barHeight)
@@ -225,7 +214,7 @@ fun LineGraph(
 ) {
     Canvas(modifier = modifier) {
         val maxDataValue = (data.maxOrNull() ?: 1f)
-        val lineColor = Color(0xFF6200EE)
+        val lineColor = Color(0xFF9C27B0) // Purple
         val strokeWidth = 5.dp.toPx()
 
         val spacing = size.width / (data.size + 1)
@@ -261,4 +250,16 @@ fun LineGraph(
             }
         }
     }
+}
+
+// Helper function to render section titles
+@Composable
+fun SectionTitle(title: String) {
+    Text(
+        text = title,
+        fontSize = 20.sp,
+        color = Color(0xFF9C27B0), // Purple
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(bottom = 8.dp)
+    )
 }

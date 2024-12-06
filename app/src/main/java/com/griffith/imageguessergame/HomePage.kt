@@ -2,7 +2,6 @@ package com.griffith.imageguessergame
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,100 +12,122 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
 @Composable
 fun HomePage(navController: NavController) {
+    // Create a background with a gradient that transitions from one color to another
     val backgroundGradient = Brush.verticalGradient(
         colors = listOf(Color(0xFF4E54C8), Color(0xFF8F94FB))
     )
 
-    // State to manage the display of the "How to Play" dialog
+    // A variable to decide whether the "How to Play" popup should show
     var showDialog by remember { mutableStateOf(false) }
 
-    // Show the dialog when showDialog is true
+    // If the "How to Play" popup should show, display it
     if (showDialog) {
         HowToPlayDialog(onDismiss = { showDialog = false })
     }
 
+    // This is the main column for the home page
     Column(
         modifier = Modifier
-            .background(backgroundGradient) // Set background to gradient
-            .fillMaxSize() // Fill the entire screen
+            .fillMaxSize()
+            .background(backgroundGradient)
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally // Center items horizontally
     ) {
-        // Circular Game Logo Image
+        GameLogo() // Add the circular game logo at the top
+        Spacer(modifier = Modifier.height(30.dp))
+
+        PlayerModeCard(
+            text = "Start Game",
+            onClick = { navController.navigate("selectPlayers") }
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        PlayerModeCard(
+            text = " Current Leaderboard",
+            onClick = { navController.navigate("leaderboard") }
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+        HowToPlayButton(onClick = { showDialog = true }) // Add the floating "How to Play" button
+    }
+}
+
+// This function shows the circular logo at the top of the home page
+@Composable
+fun GameLogo() {
+    Box(
+        modifier = Modifier
+            .size(120.dp)
+            .clip(CircleShape)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.game_logo), // Use the game logo image
+            contentDescription = "Game Logo",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
+@Composable
+fun PlayerModeCard(text: String, onClick: () -> Unit) {
+    Card(
+        onClick = onClick, // Handle card click
+        shape = RoundedCornerShape(16.dp), // Rounded corners for the card
+        modifier = Modifier
+            .fillMaxWidth(0.85f) // Card width is 85% of the screen
+            .aspectRatio(16 / 6f) // Set width-to-height ratio
+            .shadow(8.dp, RoundedCornerShape(16.dp)), // Add a shadow effect
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF6A6DBF) // Set a dark background for better contrast
+        )
+    ) {
         Box(
-            modifier = Modifier
-                .size(120.dp) // Size of the circular image container
-                .clip(CircleShape) // Clip the image to a circle
+            contentAlignment = Alignment.Center, // Center content in the box
+            modifier = Modifier.fillMaxSize() // Make the box fill the card
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.game_logo), // Replace with your game logo resource
-                contentDescription = "Game Logo",
-                contentScale = ContentScale.Crop, // Crop the image to fill the circle
-                modifier = Modifier.fillMaxSize() // Fill the circular container
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Start Game Card
-        Card(
-            onClick = { navController.navigate("selectPlayers") },
-            shape = RoundedCornerShape(24.dp),
-            modifier = Modifier
-                .fillMaxWidth(0.9f) // Slightly narrower for a centered look
-                .aspectRatio(16 / 7f) // Custom aspect ratio for a rectangle
-                .padding(8.dp)
-                .border(2.dp, Color.White, RoundedCornerShape(24.dp)) // White border
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.start_game), // Start Game image
-                contentDescription = "Start Game",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Leaderboard Card
-        Card(
-            onClick = { navController.navigate("leaderboard") },
-            shape = RoundedCornerShape(24.dp),
-            modifier = Modifier
-                .fillMaxWidth(0.95f) // Nearly full width
-                .aspectRatio(1f) // Square shape
-                .padding(8.dp)
-                .border(2.dp, Color.White, RoundedCornerShape(24.dp)) // White border
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.leaderboard), // Leaderboard image
-                contentDescription = "Leaderboard",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // How to Play - Floating Action Button
-        FloatingActionButton(
-            onClick = { showDialog = true },
-            containerColor = Color.White,
-            contentColor = Color(0xFFF7418C) // Match the color theme
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Info, // Help icon
-                contentDescription = "How to Play"
+            Text(
+                text = text, // Set the text ("Single Player" or "Multiplayer")
+                fontSize = 20.sp, // Set font size
+                fontWeight = FontWeight.Bold, // Make text bold
+                color = Color.White // White text for better readability
             )
         }
     }
+}
+
+// This is the floating button that opens the "How to Play" popup
+@Composable
+fun HowToPlayButton(onClick: () -> Unit) {
+    FloatingActionButton(
+        onClick = onClick, // What happens when the button is clicked
+        containerColor = Color.White, // The button's background color
+        contentColor = Color(0xFFF7418C) // The button's icon color
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Info, // The "info" icon for the button
+            contentDescription = "How to Play" // Description for accessibility tools
+        )
+    }
+}
+
+// This is a preview so you can see what the home page looks like while designing
+@Preview(showBackground = true)
+@Composable
+fun HomePagePreview() {
+    // Provide a mock navigation controller for testing
+    HomePage(navController = NavController(LocalContext.current))
 }

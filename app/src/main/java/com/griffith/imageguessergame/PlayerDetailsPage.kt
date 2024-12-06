@@ -23,31 +23,36 @@ import androidx.navigation.NavController
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerDetailsPage(navController: NavController, isMultiplayer: Boolean) {
+    // Define a gradient background
     val backgroundGradient = Brush.linearGradient(
         colors = listOf(Color(0xFF4E54C8), Color(0xFF8F94FB))
     )
 
-    val scrollState = rememberScrollState()
+    // State for player names
     val player1Name = remember { mutableStateOf("") }
     val player2Name = remember { mutableStateOf("") }
+
+    // Check if form is valid: Player 1 is always required, Player 2 only in multiplayer
     val isFormValid = player1Name.value.isNotBlank() && (!isMultiplayer || player2Name.value.isNotBlank())
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {},
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                ),
-                modifier = Modifier.background(backgroundGradient)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                modifier = Modifier.background(backgroundGradient),
+                title = {}
             )
         },
-        containerColor = Color.Transparent
+        containerColor = Color.Transparent // Transparent scaffold background
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -55,10 +60,11 @@ fun PlayerDetailsPage(navController: NavController, isMultiplayer: Boolean) {
                 .background(backgroundGradient)
                 .padding(innerPadding)
                 .padding(24.dp)
-                .verticalScroll(scrollState),
+                .verticalScroll(rememberScrollState()), // Enable vertical scrolling
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Page Title
             Text(
                 text = "Enter Player Details",
                 fontSize = 28.sp,
@@ -68,46 +74,33 @@ fun PlayerDetailsPage(navController: NavController, isMultiplayer: Boolean) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Player 1 TextField
-            TextField(
+            // Input field for Player 1
+            PlayerInputField(
+                label = "Player 1 Name",
                 value = player1Name.value,
-                onValueChange = { player1Name.value = it },
-                label = { Text("Player 1 Name", color = Color.Black.copy(alpha = 0.7f)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0x30FFFFFF), shape = RoundedCornerShape(12.dp))
-                    .padding(horizontal = 8.dp)
+                onValueChange = { player1Name.value = it }
             )
 
+            // Show Player 2 input only for multiplayer
             if (isMultiplayer) {
                 Spacer(modifier = Modifier.height(16.dp))
-
-                // Player 2 TextField
-                TextField(
+                PlayerInputField(
+                    label = "Player 2 Name",
                     value = player2Name.value,
-                    onValueChange = { player2Name.value = it },
-                    label = { Text("Player 2 Name", color = Color.Black.copy(alpha = 0.7f)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0x30FFFFFF), shape = RoundedCornerShape(12.dp))
-                        .padding(horizontal = 8.dp)
+                    onValueChange = { player2Name.value = it }
                 )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // "Select Category" Button
+            // Button to proceed to the next screen
             Button(
                 onClick = {
                     navController.navigate("gameCategory/${player1Name.value}/${player2Name.value}/${isMultiplayer}")
                 },
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A90E2)),
-                enabled = isFormValid,
+                enabled = isFormValid, // Enable only if form is valid
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
                     .height(50.dp)
@@ -121,4 +114,20 @@ fun PlayerDetailsPage(navController: NavController, isMultiplayer: Boolean) {
             }
         }
     }
+}
+
+// Reusable composable for input fields
+@Composable
+fun PlayerInputField(label: String, value: String, onValueChange: (String) -> Unit) {
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label, color = Color.Black.copy(alpha = 0.7f)) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0x30FFFFFF), shape = RoundedCornerShape(12.dp)) // Semi-transparent background
+            .padding(horizontal = 8.dp)
+    )
 }

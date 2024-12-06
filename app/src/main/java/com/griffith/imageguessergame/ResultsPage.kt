@@ -1,6 +1,7 @@
 package com.griffith.imageguessergame
 
 import android.content.Intent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -25,6 +26,9 @@ import androidx.navigation.NavBackStackEntry
 fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry) {
     // Scroll for better experience on smaller screens
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
+
+    // Extract data from back stack arguments
     val playerScore1 = backStackEntry.arguments?.getString("playerScore")?.toInt() ?: 0
     val playerScore2 = backStackEntry.arguments?.getString("playerScore2")?.toInt() ?: 0
     val player1Name = backStackEntry.arguments?.getString("player1Name") ?: "Player 1"
@@ -32,62 +36,59 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
     val isMultiplayer = player2Name.isNotBlank()
 
     // Database manager instance
-    val context = LocalContext.current
     val databaseManager = DatabaseManager(context)
 
-    if (isMultiplayer) {
-        // Multiplayer: Update scores and results for both players
-        val resultPlayer1 = when {
-            playerScore1 > playerScore2 -> "win"
-            playerScore1 < playerScore2 -> "loss"
-            else -> "tie"
-        }
+    // Determine result messages for both players (Multiplayer) or single player
+    val resultPlayer1 = when {
+        playerScore1 > playerScore2 -> "win"
+        playerScore1 < playerScore2 -> "loss"
+        else -> "tie"
+    }
+    val resultPlayer2 = when {
+        playerScore2 > playerScore1 -> "win"
+        playerScore2 < playerScore1 -> "loss"
+        else -> "tie"
+    }
 
-        val resultPlayer2 = when {
-            playerScore2 > playerScore1 -> "win"
-            playerScore2 < playerScore1 -> "loss"
-            else -> "tie"
-        }
-
-        // Update both players' scores and stats in the database
-        LaunchedEffect(player1Name, playerScore1) {
+    // Insert or update player scores and stats in the database
+    LaunchedEffect(player1Name, playerScore1, player2Name, playerScore2) {
+        if (isMultiplayer) {
             databaseManager.insertOrUpdatePlayerScore(player1Name, playerScore1, resultPlayer1)
-        }
-
-        LaunchedEffect(player2Name, playerScore2) {
             databaseManager.insertOrUpdatePlayerScore(player2Name, playerScore2, resultPlayer2)
-        }
-    } else {
-        // Single Player: Only update the player's total points and games played
-        LaunchedEffect(player1Name, playerScore1) {
+        } else {
             databaseManager.insertOrUpdatePlayerScore(player1Name, playerScore1, "null")
         }
     }
 
     // Determine the winner or result message
-    val winnerMessage = if (isMultiplayer) {
-        when {
-            playerScore1 > playerScore2 -> "$player1Name Wins!"
-            playerScore2 > playerScore1 -> "$player2Name Wins!"
-            else -> "It's a Tie!"
-        }
-    } else {
-        "$player1Name scored $playerScore1 points!"
+    val winnerMessage = when {
+        isMultiplayer && playerScore1 > playerScore2 -> "$player1Name Wins!"
+        isMultiplayer && playerScore2 > playerScore1 -> "$player2Name Wins!"
+        isMultiplayer -> "It's a Tie!"
+        else -> "$player1Name scored $playerScore1 points!"
     }
 
+    // Common button style to reduce duplication
+    val buttonModifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp)
+
+    // Content
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Game Results", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF6200EE))
+                title = { Text(text = "Game Results", fontWeight = FontWeight.Bold, color = Color.White) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0288D1))
             )
-        }
+        },
+        containerColor = Color(0xFFF1F1F1) // Background color for the scaffold
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(24.dp)
+                .background(Color(0xFFE3F2FD)) // Light background color for the main content
                 .verticalScroll(scrollState),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -97,15 +98,15 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
                 text = "Results",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF6200EE)
+                color = Color(0xFF0288D1)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // Player scores
-            Text(text = "$player1Name: $playerScore1 points", fontSize = 20.sp)
+            Text(text = "$player1Name: $playerScore1 points", fontSize = 20.sp, color = Color.Black)
             if (isMultiplayer) {
-                Text(text = "$player2Name: $playerScore2 points", fontSize = 20.sp)
+                Text(text = "$player2Name: $playerScore2 points", fontSize = 20.sp, color = Color.Black)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -120,63 +121,58 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // "Play Again" button
-            Button(
-                onClick = {
-                    navController.navigate("gameCategory/${player1Name}/${player2Name}/${isMultiplayer}")
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF03DAC5))
-            ) {
-                Icon(Icons.Filled.Refresh, contentDescription = "Play Again", tint = Color.White)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Play Again", color = Color.White)
-            }
+            // Buttons section with a nicer layout
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                // "Play Again" button
+                Button(
+                    onClick = {
+                        navController.navigate("gameCategory/${player1Name}/${player2Name}/${isMultiplayer}")
+                    },
+                    modifier = buttonModifier,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF03DAC5))
+                ) {
+                    Icon(Icons.Filled.Refresh, contentDescription = "Play Again", tint = Color.White)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Play Again", color = Color.White)
+                }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // "Share Results" button
-            Button(
-                onClick = {
-                    val shareIntent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(
-                            Intent.EXTRA_TEXT,
-                            if (isMultiplayer) {
-                                "$winnerMessage\n$player1Name: $playerScore1 points\n$player2Name: $playerScore2 points\nCan you beat us?"
-                            } else {
-                                "$player1Name scored $playerScore1 points in Image Guesser Game! Can you beat this?"
-                            }
-                        )
-                        type = "text/plain"
-                    }
-                    context.startActivity(Intent.createChooser(shareIntent, "Share your game results!"))
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE))
-            ) {
-                Icon(Icons.Filled.Share, contentDescription = "Share Results", tint = Color.White)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Share Results", color = Color.White)
-            }
+                // "Share Results" button
+                Button(
+                    onClick = {
+                        val shareText = if (isMultiplayer) {
+                            "$winnerMessage\n$player1Name: $playerScore1 points\n$player2Name: $playerScore2 points\nCan you beat us?"
+                        } else {
+                            "$player1Name scored $playerScore1 points in Image Guesser Game! Can you beat this?"
+                        }
+                        val shareIntent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, shareText)
+                            type = "text/plain"
+                        }
+                        context.startActivity(Intent.createChooser(shareIntent, "Share your game results!"))
+                    },
+                    modifier = buttonModifier,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE))
+                ) {
+                    Icon(Icons.Filled.Share, contentDescription = "Share Results", tint = Color.White)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Share Results", color = Color.White)
+                }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // "See Leaderboard" button
-            Button(
-                onClick = { navController.navigate("Leaderboard") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0288D1))
-            ) {
-                Icon(Icons.Filled.Star, contentDescription = "See Leaderboard", tint = Color.White)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "See Leaderboard", color = Color.White)
+                // "See Leaderboard" button
+                Button(
+                    onClick = { navController.navigate("Leaderboard") },
+                    modifier = buttonModifier,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0288D1))
+                ) {
+                    Icon(Icons.Filled.Star, contentDescription = "See Leaderboard", tint = Color.White)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "See Leaderboard", color = Color.White)
+                }
             }
         }
     }

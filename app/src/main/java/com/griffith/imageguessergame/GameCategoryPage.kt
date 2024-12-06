@@ -15,9 +15,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -29,14 +28,16 @@ import androidx.navigation.NavBackStackEntry
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackEntry) {
-    val scrollState = rememberScrollState()
+    // Extract player and game data from navigation arguments
     val player1Name = backStackEntry.arguments?.getString("player1Name") ?: "Player 1"
     val player2Name = backStackEntry.arguments?.getString("player2Name") ?: ""
     val isMultiplayer = backStackEntry.arguments?.getBoolean("isMultiplayer") ?: false
+
+    // UI states for settings menu
     var isMenuExpanded by remember { mutableStateOf(false) }
-    var imageCount by remember { mutableStateOf(2) } // Default number of pictures
+    var imageCount by remember { mutableStateOf(2) } // Default number of images
     var isTimerEnabled by remember { mutableStateOf(false) }
-    var timerDuration  by remember {mutableStateOf(30)}
+    var timerDuration by remember { mutableStateOf(30) }
 
     val backgroundGradient = Brush.verticalGradient(
         colors = listOf(Color(0xFF4E54C8), Color(0xFF8F94FB))
@@ -44,8 +45,9 @@ fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackE
 
     Scaffold(
         topBar = {
+            // AppBar with back button and settings menu
             TopAppBar(
-                title = {"Return to select Players"},
+                title = {},
                 navigationIcon = {
                     IconButton(onClick = { navController.navigate("selectPlayers") }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
@@ -55,53 +57,16 @@ fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackE
                     IconButton(onClick = { isMenuExpanded = true }) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
                     }
-                    DropdownMenu(
+                    SettingsMenu(
                         expanded = isMenuExpanded,
-                        onDismissRequest = { isMenuExpanded = false }
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(text = "Select Number of Pictures", fontSize = 16.sp, color = Color.Black)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            // Slider for selecting the number of pictures
-                            Slider(
-                                value = imageCount.toFloat(),
-                                onValueChange = { value ->
-                                    // Only allow even numbers
-                                    imageCount = (value / 2).toInt() * 2
-                                },
-                                valueRange = 2f..30f,
-                                steps = 14, // Ensures the slider only snaps to even numbers
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            Text(text = "Selected: $imageCount", fontSize = 14.sp, color = Color.Black)
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Timer Enable Radio Button
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                RadioButton(
-                                    selected = isTimerEnabled,
-                                    onClick = {
-                                        isTimerEnabled = !isTimerEnabled
-                                    }
-                                )
-                                Text(text = "Enable Timer", fontSize = 14.sp, color = Color.Black)
-                            }
-                            if(isTimerEnabled){
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(text = "Timer Duration (seconds)", fontSize = 16.sp, color = Color.Black)
-                                Slider(
-                                    value = timerDuration.toFloat(),
-                                    onValueChange = { value ->
-                                        timerDuration = value.toInt()
-                                    },
-                                    valueRange = 10f..50f,
-                                    steps = 40,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                                Text(text = "Selected: $timerDuration seconds", fontSize = 14.sp, color = Color.Black)
-                            }
-                        }
-                    }
+                        onDismiss = { isMenuExpanded = false },
+                        imageCount = imageCount,
+                        onImageCountChange = { imageCount = it },
+                        isTimerEnabled = isTimerEnabled,
+                        onTimerToggle = { isTimerEnabled = !isTimerEnabled },
+                        timerDuration = timerDuration,
+                        onTimerDurationChange = { timerDuration = it }
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 modifier = Modifier.background(backgroundGradient)
@@ -114,26 +79,25 @@ fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackE
                 .fillMaxSize()
                 .background(backgroundGradient)
                 .padding(innerPadding)
-                .verticalScroll(scrollState)
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Player Info
+            // Display player names
             if (isMultiplayer) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    PlayerBox(playerName = player1Name, backgroundColor = Color(0xFF4E54C8))
-                    PlayerBox(playerName = player2Name, backgroundColor = Color(0xFF4E54C8))
+                    PlayerBox(playerName = player1Name)
+                    PlayerBox(playerName = player2Name)
                 }
             } else {
-                PlayerBox(playerName = player1Name, backgroundColor = Color(0xFF4E54C8))
+                PlayerBox(playerName = player1Name)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // "Choose a category" Text
             Text(
                 text = "Choose a category",
                 fontSize = 20.sp,
@@ -142,25 +106,24 @@ fun GameCategoryPage(navController: NavController, backStackEntry: NavBackStackE
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // Categories in separate rows with Play button below
-            CategoryBoxWithButton(navController, "Animals", R.drawable.animals_image, player1Name, player2Name, imageCount, isTimerEnabled, timerDuration)
+            // Display category cards
+            CategoryCard(navController, "Animals", R.drawable.animals_image, player1Name, player2Name, imageCount, isTimerEnabled, timerDuration)
             Spacer(modifier = Modifier.height(16.dp))
-            CategoryBoxWithButton(navController, "Logos", R.drawable.logos_image, player1Name, player2Name, imageCount, isTimerEnabled, timerDuration)
+            CategoryCard(navController, "Logos", R.drawable.logos_image, player1Name, player2Name, imageCount, isTimerEnabled, timerDuration)
             Spacer(modifier = Modifier.height(16.dp))
-            CategoryBoxWithButton(navController, "Fruits", R.drawable.fruits_image, player1Name, player2Name, imageCount, isTimerEnabled, timerDuration)
+            CategoryCard(navController, "Fruits", R.drawable.fruits_image, player1Name, player2Name, imageCount, isTimerEnabled, timerDuration)
             Spacer(modifier = Modifier.height(16.dp))
-            CategoryBoxWithButton(navController, "Random", R.drawable.random_image, player1Name, player2Name, imageCount, isTimerEnabled, timerDuration)
+            CategoryCard(navController, "Random", R.drawable.random_image, player1Name, player2Name, imageCount, isTimerEnabled, timerDuration)
         }
     }
 }
 
 @Composable
-fun PlayerBox(playerName: String, backgroundColor: Color) {
+fun PlayerBox(playerName: String) {
     Box(
         modifier = Modifier
             .size(100.dp)
-            .background(backgroundColor, shape = RoundedCornerShape(16.dp))
-            .padding(16.dp),
+            .background(Color(0xFF4E54C8), shape = RoundedCornerShape(16.dp)),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -173,15 +136,22 @@ fun PlayerBox(playerName: String, backgroundColor: Color) {
 }
 
 @Composable
-fun CategoryBoxWithButton(navController: NavController, categoryName: String, imageRes: Int, player1Name: String, player2Name: String?, imageCount: Int, isTimerEnabled: Boolean, timerDuration: Int) {
+fun CategoryCard(
+    navController: NavController,
+    categoryName: String,
+    imageRes: Int,
+    player1Name: String,
+    player2Name: String?,
+    imageCount: Int,
+    isTimerEnabled: Boolean,
+    timerDuration: Int
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .shadow(10.dp, RoundedCornerShape(16.dp))
             .background(Color.White, shape = RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp))
             .clickable {
-                // Navigate with category and player details
                 val route = if (player2Name == null) {
                     "gameScreen/$categoryName/$player1Name/$imageCount/$isTimerEnabled/$timerDuration"
                 } else {
@@ -191,50 +161,60 @@ fun CategoryBoxWithButton(navController: NavController, categoryName: String, im
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
+        Image(
+            painter = painterResource(id = imageRes),
+            contentDescription = categoryName,
+            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(250.dp)
-                .background(Color.Gray, shape = RoundedCornerShape(16.dp))
-                .clip(RoundedCornerShape(16.dp)),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = imageRes),
-                contentDescription = categoryName,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-            Text(
-                text = categoryName,
-                fontSize = 24.sp,
-                color = Color.White,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .background(Color.Black.copy(alpha = 0.5f), shape = RoundedCornerShape(8.dp))
-                    .padding(8.dp)
-            )
-        }
+                .height(200.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = categoryName,
+            fontSize = 18.sp,
+            color = Color.Black,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
 
-        Spacer(modifier = Modifier.height(12.dp))
+@Composable
+fun SettingsMenu(
+    expanded: Boolean,
+    onDismiss: () -> Unit,
+    imageCount: Int,
+    onImageCountChange: (Int) -> Unit,
+    isTimerEnabled: Boolean,
+    onTimerToggle: () -> Unit,
+    timerDuration: Int,
+    onTimerDurationChange: (Int) -> Unit
+) {
+    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Select Number of Pictures", fontWeight = FontWeight.Bold)
+            Slider(
+                value = imageCount.toFloat(),
+                onValueChange = { onImageCountChange((it / 2).toInt() * 2) },
+                valueRange = 2f..30f,
+                steps = 14
+            )
+            Text("Selected: $imageCount", fontSize = 14.sp)
 
-        // Play Button
-        Button(
-            onClick = {
-                val route = if (player2Name == null) {
-                    "gameScreen/$categoryName/$player1Name/$imageCount/$isTimerEnabled/$timerDuration"
-                } else {
-                    "gameScreen/$categoryName/$player1Name/$player2Name/$imageCount/$isTimerEnabled/$timerDuration"
-                }
-                navController.navigate(route)
-            },
-            shape = RoundedCornerShape(50.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .height(50.dp)
-        ) {
-            Text(text = "Play Now", fontSize = 18.sp)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(selected = isTimerEnabled, onClick = onTimerToggle)
+                Text("Enable Timer", fontSize = 14.sp)
+            }
+            if (isTimerEnabled) {
+                Slider(
+                    value = timerDuration.toFloat(),
+                    onValueChange = { onTimerDurationChange(it.toInt()) },
+                    valueRange = 10f..50f
+                )
+                Text("Timer: $timerDuration seconds", fontSize = 14.sp)
+            }
         }
     }
 }
