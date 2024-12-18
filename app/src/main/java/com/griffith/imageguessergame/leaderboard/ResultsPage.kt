@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -24,6 +25,9 @@ import androidx.navigation.NavBackStackEntry
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry) {
+    val backgroundGradient = Brush.linearGradient(
+        colors = listOf(Color(0xFF4E54C8), Color(0xFF8F94FB))
+    )
     // Scroll for better experience on smaller screens
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -77,35 +81,30 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "Game Results", fontWeight = FontWeight.Bold, color = Color.White) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF0288D1))
+                title = {Text(text ="Results",fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)},
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent // Transparent background
+                ),
+                modifier = Modifier.background(backgroundGradient) // Apply the gradient
             )
         },
-        containerColor = Color(0xFFF1F1F1) // Background color for the scaffold
-    ) { innerPadding ->
+        containerColor = Color.Transparent // Transparent scaffold background
+    ){ innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(24.dp)
-                .background(Color(0xFFE3F2FD)) // Light background color for the main content
+                .background(backgroundGradient) // Light background color for the main content
                 .verticalScroll(scrollState),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Title
-            Text(
-                text = "Results",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0288D1)
-            )
-
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Player scores
-            Text(text = "$player1Name: $playerScore1 points", fontSize = 20.sp, color = Color.Black)
+            //Display scores before winner message only for multiplayer
             if (isMultiplayer) {
+                Text(text = "$player1Name: $playerScore1 points", fontSize = 20.sp, color = Color.Black)
                 Text(text = "$player2Name: $playerScore2 points", fontSize = 20.sp, color = Color.Black)
             }
 
@@ -116,7 +115,7 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
                 text = winnerMessage,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = if (winnerMessage.contains("Wins")) Color.Green else Color.Gray
+                color = if (winnerMessage.contains("Wins")) Color.Green else Color.White
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -129,7 +128,7 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
                         navController.navigate("gameCategory/${player1Name}/${player2Name}/${isMultiplayer}")
                     },
                     modifier = buttonModifier,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF03DAC5))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6A6DBF))
                 ) {
                     Icon(Icons.Filled.Refresh, contentDescription = "Play Again", tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
@@ -154,7 +153,7 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
                         context.startActivity(Intent.createChooser(shareIntent, "Share your game results!"))
                     },
                     modifier = buttonModifier,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6A6DBF))
                 ) {
                     Icon(Icons.Filled.Share, contentDescription = "Share Results", tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
@@ -167,7 +166,7 @@ fun ResultsPage(navController: NavController, backStackEntry: NavBackStackEntry)
                 Button(
                     onClick = { navController.navigate("Leaderboard") },
                     modifier = buttonModifier,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0288D1))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6A6DBF))
                 ) {
                     Icon(Icons.Filled.Star, contentDescription = "See Leaderboard", tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))

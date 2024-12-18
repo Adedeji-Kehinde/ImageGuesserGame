@@ -145,7 +145,6 @@ fun GameScreenPage(navController: NavController, backStackEntry: NavBackStackEnt
 
         when {
             guess.equals(answer, ignoreCase = true) -> {
-                feedbackMessage = "Correct! 🎉"
                 if (attemptCount == 0) {
                     if (isMultiplayer) {
                         if (currentPlayer == 1) score1 += 10 else score2 += 10

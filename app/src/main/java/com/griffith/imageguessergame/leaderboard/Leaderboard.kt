@@ -1,6 +1,7 @@
 package com.griffith.imageguessergame
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
@@ -21,6 +23,10 @@ import androidx.compose.ui.platform.LocalContext
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Leaderboard(navController: NavController) {
+    val backgroundGradient = Brush.linearGradient(
+        colors = listOf(Color(0xFF4E54C8), Color(0xFF8F94FB))
+    )
+
     val databaseManager = DatabaseManager(LocalContext.current)
     val leaderboardEntries = databaseManager.getLeaderboard()
 
@@ -47,14 +53,19 @@ fun Leaderboard(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Leaderboard", color = Color.White) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF6A1B9A)) // Purple
+                title = {Text(text ="Leaderboard", color = Color.White)},
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent // Transparent background
+                ),
+                modifier = Modifier.background(backgroundGradient) // Apply the gradient
             )
-        }
+        },
+        containerColor = Color.Transparent // Transparent scaffold background
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .background(backgroundGradient)
                 .padding(innerPadding)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -97,7 +108,7 @@ fun Leaderboard(navController: NavController) {
                             text = column,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF9C27B0), // Purple
+                            color = Color.White,
                             modifier = Modifier.clickable {
                                 // Toggle sorting direction if the same column is clicked
                                 if (sortBy == column) setAscending(!ascending)
@@ -119,11 +130,11 @@ fun Leaderboard(navController: NavController) {
                         .padding(8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = entry.playerName, color = Color(0xFF9C27B0)) // Purple text
-                    Text(text = entry.totalPoints.toString(), color = Color(0xFF9C27B0))
-                    Text(text = entry.wins.toString(), color = Color(0xFF9C27B0))
-                    Text(text = entry.losses.toString(), color = Color(0xFF9C27B0))
-                    Text(text = entry.ties.toString(), color = Color(0xFF9C27B0))
+                    Text(text = entry.playerName, color = Color.White)
+                    Text(text = entry.totalPoints.toString(), color = Color.White)
+                    Text(text = entry.wins.toString(), color = Color.White)
+                    Text(text = entry.losses.toString(), color = Color.White)
+                    Text(text = entry.ties.toString(), color = Color.White)
                 }
             }
 
@@ -133,7 +144,7 @@ fun Leaderboard(navController: NavController) {
                 Button(
                     onClick = { navController.navigate("HomePage") },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9C27B0)) // Purple
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6A6DBF))
                 ) {
                     Text("Back to Home", color = Color.White)
                 }
@@ -142,7 +153,7 @@ fun Leaderboard(navController: NavController) {
     }
 }
 
-// Bar Chart Component (Top 3 Players)
+// Bar Chart Component
 @Composable
 fun BarChart(
     data: List<Float>,
@@ -152,53 +163,45 @@ fun BarChart(
 ) {
     Canvas(modifier = modifier) {
         val maxDataValue = (data.maxOrNull() ?: 1f)
-
-        // Relative X positions for the bars
-        val barPositions = data.indices.map { (it + 1) * 0.25f }
-        val barWidth = size.width * 0.1f // Relative bar width
+        val barWidth = size.width * 0.1f
+        val barColors = listOf(Color(0xFFFFD700), Color(0xFFC0C0C0), Color(0xFFCD7F32)) // Gold, Silver, Bronze
 
         data.forEachIndexed { index, value ->
             val barHeight = (value / maxDataValue) * size.height * 0.6f
-            val barCenterX = size.width * barPositions[index]
+            val barCenterX = size.width * ((index + 1) * 0.25f)
 
             // Draw bar
             drawRect(
-                color = when (index) {
-                    0 -> Color(0xFF9C27B0) // Purple
-                    1 -> Color(0xFF8E24AA) // Purple shade
-                    else -> Color(0xFF7B1FA2) // Darker purple
-                },
-                topLeft = Offset(barCenterX - barWidth / 2, size.height - barHeight - 40.dp.toPx()),
+                color = barColors.getOrElse(index) { Color.Gray },
+                topLeft = Offset(barCenterX - barWidth / 2, size.height - barHeight),
                 size = androidx.compose.ui.geometry.Size(barWidth, barHeight)
             )
 
-            // Draw ranking below the bar
+            // Draw ranking inside the bar
             drawIntoCanvas { canvas ->
-                val paint = androidx.compose.ui.graphics.Paint().asFrameworkPaint().apply {
-                    color = android.graphics.Color.BLACK
-                    textAlign = android.graphics.Paint.Align.CENTER
-                    textSize = 16.dp.toPx()
-                }
                 canvas.nativeCanvas.drawText(
                     rankings[index],
                     barCenterX,
-                    size.height - barHeight - 60.dp.toPx(),
-                    paint
+                    size.height - barHeight / 2, // Center the rank inside the bar
+                    androidx.compose.ui.graphics.Paint().asFrameworkPaint().apply {
+                        color = android.graphics.Color.BLACK
+                        textAlign = android.graphics.Paint.Align.CENTER
+                        textSize = 16.dp.toPx()
+                    }
                 )
             }
 
-            // Draw player name above the bar
+            // Draw label (player name) above the bar
             drawIntoCanvas { canvas ->
-                val paint = androidx.compose.ui.graphics.Paint().asFrameworkPaint().apply {
-                    color = android.graphics.Color.BLACK
-                    textAlign = android.graphics.Paint.Align.CENTER
-                    textSize = 16.dp.toPx()
-                }
                 canvas.nativeCanvas.drawText(
                     labels[index],
                     barCenterX,
-                    size.height - barHeight - 80.dp.toPx(),
-                    paint
+                    size.height - barHeight - 20.dp.toPx(), // Position above the bar
+                    androidx.compose.ui.graphics.Paint().asFrameworkPaint().apply {
+                        color = android.graphics.Color.WHITE
+                        textAlign = android.graphics.Paint.Align.CENTER
+                        textSize = 16.dp.toPx()
+                    }
                 )
             }
         }
@@ -235,7 +238,7 @@ fun LineGraph(
         // Draw player names at their respective points
         drawIntoCanvas { canvas ->
             val paint = androidx.compose.ui.graphics.Paint().asFrameworkPaint().apply {
-                color = android.graphics.Color.BLACK
+                color = android.graphics.Color.WHITE
                 textAlign = android.graphics.Paint.Align.CENTER
                 textSize = 16.dp.toPx()
             }
@@ -258,8 +261,8 @@ fun SectionTitle(title: String) {
     Text(
         text = title,
         fontSize = 20.sp,
-        color = Color(0xFF9C27B0), // Purple
         fontWeight = FontWeight.Bold,
+        color = Color.White,
         modifier = Modifier.padding(bottom = 8.dp)
     )
 }

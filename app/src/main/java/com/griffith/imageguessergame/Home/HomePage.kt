@@ -115,7 +115,7 @@ fun HowToPlayButton(onClick: () -> Unit) {
     FloatingActionButton(
         onClick = onClick, // What happens when the button is clicked
         containerColor = Color.White, // The button's background color
-        contentColor = Color(0xFFF7418C) // The button's icon color
+        contentColor = Color.Black // The button's icon color
     ) {
         Icon(
             imageVector = Icons.Filled.Info, // The "info" icon for the button
